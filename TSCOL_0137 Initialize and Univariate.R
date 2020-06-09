@@ -2,8 +2,22 @@
 # Collaboration: TSCOL_0137
 #   Senior PI: David Rimm
 #   Lead Investigator: Ioannis Vathiotis
-#
 # Jason Reeves
+
+# Copyright (C) 2020, NanoString Technologies, Inc.
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# details.
+#
+# You should have received a copy of the GNU General Public License along with
+# this program.  If not, see https://www.gnu.org/licenses/.
 
 # Inputs needed: graphing_adjusted_log2_expression_data_WITH DSP.xlsx
 ##########################################
@@ -16,8 +30,8 @@ library(ggplot2)
 library(ggrepel)
 library(pheatmap)
 
-##########################################
-##### Custom Functions ####
+##########################
+#### Custom Functions ####
 
 # mean_geo: compute the geometric mean of linear count data
 mean_geo <- function(x,
@@ -29,10 +43,13 @@ mean_geo <- function(x,
 #### Data Loading ####
 
 #### 0.1: Load data ####
-annot <- as.data.frame(read_xlsx(path = 'graphing_adjusted_log2_expression_data_WITH DSP.xlsx', sheet = 5))
-targetannot <- as.data.frame(read_xlsx(path = 'graphing_adjusted_log2_expression_data_WITH DSP.xlsx', sheet = 6))
+annot <- as.data.frame(read_xlsx(path = 'graphing_adjusted_log2_expression_data_WITH DSP.xlsx',
+                                 sheet = 5))
+targetannot <- as.data.frame(read_xlsx(path = 'graphing_adjusted_log2_expression_data_WITH DSP.xlsx',
+                                       sheet = 6))
 targetannot <- targetannot[,1:7]
-data <- as.data.frame(read_xlsx(path = 'graphing_adjusted_log2_expression_data_WITH DSP.xlsx', sheet = 2))
+data <- as.data.frame(read_xlsx(path = 'graphing_adjusted_log2_expression_data_WITH DSP.xlsx',
+                                sheet = 2))
 rownames(data) <- data$Target
 data <- data[,-1]
 
@@ -95,8 +112,11 @@ OR_VP <- ggplot(subset(out_R, run %in% c('Bulk','Mean DSP')),
   theme_bw(base_size = 17) +
   labs(title = '', y = 'Significance, -log10(P)', x = 'Fold Change, log2(FC)') +
   scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
-  geom_text_repel(data = subset(out_R, run %in% c('Bulk','Mean DSP') & abs(FC) > 0.25 & pval < 0.01),
-                  color = 'black', size = 5, fontface = 'bold', segment.size = 1, box.padding = .45, min.segment.length = .1, point.padding = .3) +# facet_wrap(~run) +
+  geom_text_repel(data = subset(out_R, run %in% c('Bulk','Mean DSP') &
+                                  abs(FC) > 0.25 & pval < 0.01),
+                  color = 'black', size = 5, fontface = 'bold',
+                  segment.size = 1, box.padding = .45, min.segment.length = .1,
+                  point.padding = .3) +
   scale_color_manual(values = c(CD45 = '#DD0000',
                                 CD68 = '#FF00FF',
                                 Melanocyte = '#009000',
@@ -104,7 +124,8 @@ OR_VP <- ggplot(subset(out_R, run %in% c('Bulk','Mean DSP')),
   guides(color = guide_legend(title = 'Analyte', override.aes = list(size = 5)), size = FALSE) +
   geom_hline(yintercept = -log10(0.05), lty = 'dashed', color = 'black') +
   annotate(geom = 'text', x = -.8, y = 1.4, label = 'P = 0.05', size = 5) +
-  theme(legend.position = c(0.15,0.85), aspect.ratio = 0.9, legend.background = element_rect(color = 'darkgray', fill = 'white'))
+  theme(legend.position = c(0.15,0.85), aspect.ratio = 0.9,
+        legend.background = element_rect(color = 'darkgray', fill = 'white'))
 
 #### 1.3 Save DE Results ####
 ggsave(OR_VP, filename = 'OR_VolcanoPlot.tiff', width = 8, height = 8, dpi = 300)
@@ -124,9 +145,9 @@ cor_heat <- pheatmap(gene_cor,
          annotation_col = gene_ann[,c('Data','Source')],
          show_rownames = F, show_colnames = F,
          clustering_method = 'average',
-         #breaks = seq(-1,1,0.025), color = colorRampPalette(colors = c('red','lightyellow','darkblue'))(80),
          annotation_colors = list(Data = c(`Bulk RNA` = '#000080',`GeoMx DSP` = '#F5C242'),
-                                  Source = c(CD45 = '#DD0000', CD68 = '#FF00FF', IO360 = '#000080', Melanocyte = '#009000')))
+                                  Source = c(CD45 = '#DD0000', CD68 = '#FF00FF',
+                                             IO360 = '#000080', Melanocyte = '#009000')))
 
 #### 2.2: Save Files ####
 jpeg(filename = 'CorrelationMap.jpg', width = 8, height = 6, units = 'in', res = 300)
@@ -143,5 +164,6 @@ dev.off()
 #### 3: Save Workspace Environments ####
 
 out_Surv <- out_R
-rm(list = c('comp','cor_heat','dsp_genes','g','gene_ann','gene_cor','mean_geo','OR_VP','out_R','data_orig','targetannot_orig'))
+rm(list = c('comp','cor_heat','dsp_genes','g','gene_ann','gene_cor','mean_geo',
+            'OR_VP','out_R','data_orig','targetannot_orig'))
 save.image(file = 'TSCOL_0137_Initialized.Rdata')
