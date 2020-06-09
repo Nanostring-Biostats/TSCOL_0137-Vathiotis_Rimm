@@ -11,7 +11,14 @@ Scripts related to IO 360 and GeoMx DSP analysis of melanoma samples in collabor
 **Files contained:**
 
 - graphing\_adjusted\_log2\_expression\_data\_WITH DSP.xlsx: combined GeoMx and IO 360 expression results provided to NanoString for analysis.
-- 01\_TSCOL\_0137\_Initialize.R - script to read in and process univariate analysis of the GeoMx and IO 360 data. Outputs figures and a working environment for downstream multivariate analysis via regularization.
+- 01\_TSCOL\_0137\_Initialize.R: script to read in and process univariate analysis of the GeoMx and IO 360 data. Outputs figures and a working environment for downstream multivariate analysis via regularization.
+
+**Contact us:**\
+NanoString Technologies, Inc.\
+530 Fairview Avenue N\
+Seattle, WA 98109\
+Tel: (888) 358-6266\
+zyang@nanostring.com
 
 ### License
 Copyright (C) 2020, NanoString Technologies, Inc.
