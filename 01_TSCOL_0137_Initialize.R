@@ -43,12 +43,12 @@ mean_geo <- function(x,
 #### Data Loading ####
 
 #### 0.1: Load data ####
-annot <- as.data.frame(read_xlsx(path = 'graphing_adjusted_log2_expression_data_WITH DSP.xlsx',
+annot <- as.data.frame(read_xlsx(path = 'data/graphing_adjusted_log2_expression_data_WITH DSP.xlsx',
                                  sheet = 5))
-targetannot <- as.data.frame(read_xlsx(path = 'graphing_adjusted_log2_expression_data_WITH DSP.xlsx',
+targetannot <- as.data.frame(read_xlsx(path = 'data/graphing_adjusted_log2_expression_data_WITH DSP.xlsx',
                                        sheet = 6))
 targetannot <- targetannot[,1:7]
-data <- as.data.frame(read_xlsx(path = 'graphing_adjusted_log2_expression_data_WITH DSP.xlsx',
+data <- as.data.frame(read_xlsx(path = 'data/graphing_adjusted_log2_expression_data_WITH DSP.xlsx',
                                 sheet = 2))
 rownames(data) <- data$Target
 data <- data[,-1]
@@ -128,9 +128,13 @@ OR_VP <- ggplot(subset(out_R, run %in% c('Bulk','Mean DSP')),
         legend.background = element_rect(color = 'darkgray', fill = 'white'))
 
 #### 1.3 Save DE Results ####
-ggsave(OR_VP, filename = 'OR_VolcanoPlot.tiff', width = 8, height = 8, dpi = 300)
-ggsave(OR_VP, filename = 'OR_VolcanoPlot.svg', width = 8, height = 8, dpi = 300)
-ggsave(OR_VP, filename = 'OR_volcanoPlot.jpg', width = 8, height = 8, dpi = 300)
+dir.create("figs/")
+dir.create("figs/tiff")
+dir.create("figs/svg")
+dir.create("figs/jpg")
+ggsave(OR_VP, filename = 'figs/tiff/Figure3.tiff', width = 8, height = 8, dpi = 300)
+ggsave(OR_VP, filename = 'figs/svg/Figure3.svg', width = 8, height = 8, dpi = 300)
+ggsave(OR_VP, filename = 'figs/jpg/Figure3.jpg', width = 8, height = 8, dpi = 300)
 
 #############################
 #### 2.0 Correlation Map ####
@@ -150,12 +154,17 @@ cor_heat <- pheatmap(gene_cor,
                                              IO360 = '#000080', Melanocyte = '#009000')))
 
 #### 2.2: Save Files ####
-jpeg(filename = 'CorrelationMap.jpg', width = 8, height = 6, units = 'in', res = 300)
+tiff(filename = 'figs/tiff/Figure1.tiff', width = 8, height = 6, units = 'in', res = 300)
 grid::grid.newpage()
 grid::grid.draw(cor_heat$gtable)
 dev.off()
 
-svg(filename = 'CorrelationMap.svg', width = 8, height = 6)
+jpeg(filename = 'figs/jpg/Figure1.jpg', width = 8, height = 6, units = 'in', res = 300)
+grid::grid.newpage()
+grid::grid.draw(cor_heat$gtable)
+dev.off()
+
+svg(filename = 'figs/svg/Figure1.svg', width = 8, height = 6)
 grid::grid.newpage()
 grid::grid.draw(cor_heat$gtable)
 dev.off()
@@ -166,4 +175,4 @@ dev.off()
 out_Surv <- out_R
 rm(list = c('comp','cor_heat','dsp_genes','g','gene_ann','gene_cor','mean_geo',
             'OR_VP','out_R','data_orig','targetannot_orig'))
-save.image(file = 'TSCOL_0137_Initialized.Rdata')
+save.image(file = 'data/TSCOL_0137_Initialized.Rdata')
