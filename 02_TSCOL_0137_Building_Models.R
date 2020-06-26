@@ -125,8 +125,8 @@ smooth_bootstrap <- function(dataFinal, devList = devList){
   testfit <- coef(fit)
   scores <- apply(newX, 1, function(vec) {sum(vec[testfit@i[-1]] * testfit@x[-1])})
 
-  rocobj <- roc(newY==levels(newY)[1], 
-                scores)
+  rocobj <- roc(as.numeric(newY==1), 
+                scores, direction = "<")
   return(list(auc = rocobj$auc, 
               rocobj, 
               newY, 
@@ -140,8 +140,8 @@ smooth_bootstrap_selected <- function(dataFinal, testfit, genesList){
   newY <- dataFinal$y
   scores <- apply(newX, 1, function(vec) {sum((vec * testfit[as.character(genesList),]))})
   
-  rocobj <- roc(newY==levels(newY)[1], 
-                scores)
+  rocobj <- roc(as.numeric(newY==1), 
+                scores, direction = "<")
   
   return(list(auc = rocobj$auc, rocobj, 
               newY, scores,
@@ -149,12 +149,9 @@ smooth_bootstrap_selected <- function(dataFinal, testfit, genesList){
 }
 
 # ggboxroc: output boxplot of scores and ROC curves for a fitted model 
-ggboxroc <- function(aucList = aucList){
-  if (aucList[[1]][[3]][[1]] %in% c("R", "NR")){
-    aucList[[1]][[3]] <- factor(aucList[[1]][[3]], labels = c("SD/PD", "CR/PR"))
-  } else {
-    aucList[[1]][[3]] <- factor(aucList[[1]][[3]], labels = c("No", "Yes"))
-  }
+ggboxroc <- function(aucList = aucList, labels){
+  aucList[[1]][[3]] <- factor(aucList[[1]][[3]], labels = labels)
+  
   
   dat <- data.frame(scores = aucList[[1]][[4]], 
                     outcome = aucList[[1]][[3]])
@@ -209,7 +206,7 @@ varimpAUC <- function(newx, y, coefmat, genes, nperm){
   
   scores <- apply(newx, 1, 
                   function(vec) {sum((vec[coefmat@i[-1]] * coefmat@x[-1])[genes])})
-  auc <- roc(y==levels(y)[1], scores)$auc
+  auc <- roc(as.numeric(y==1), scores, direction = "<")$auc
   
   set.seed(2020)
   resmat <- matrix(NA, nrow = nperm, ncol = length(genes), 
@@ -225,7 +222,7 @@ varimpAUC <- function(newx, y, coefmat, genes, nperm){
       xtmp[, gene] <- xtmp[sampleids, gene]
       scores <- apply(xtmp, 1, 
                       function(vec) {sum((vec[coefmat@i[-1]] * coefmat@x[-1])[genes])})
-      rocobj <- roc(y==levels(y)[1], scores)
+      rocobj <- roc(as.numeric(y==1), scores, direction = "<")
       resmat[n, gene] <- rocobj$auc
     }
   }
@@ -331,8 +328,8 @@ rm(list = c("p", "x", "targetannot2", "matchedproteins", "cormat",
             "i", "target", "removeIndex"))
 
 ####################################################################
-#### Section 4: Building regularized logistic regression models ####
-#### 4.1: Removing highly correlated variables ####
+#### Section 3: Building regularized logistic regression models ####
+#### 3.1: Removing highly correlated variables ####
 # provide parameters for cross-validation in glmnet
 measure  <- "auc" 
 nfolds <- 4
@@ -370,9 +367,9 @@ for (i in seq_len(length(runNames))){
   # non-correlated x
   selectedx <- x[, which(colnames(x) %in% addVarlist)]
   standbylist <- setdiff(colnames(x), addVarlist)
-  y <- annot$Response.NS 
+  y <- as.numeric(annot$Response.NS == "R") 
   
-  #### 4.3: fit models with cross-validation on DSP and bulk RNA combined #### 
+  #### 3.3: fit models with cross-validation on DSP and bulk RNA combined #### 
   set.seed(seed)
   alphaList <- lapply(1:nalpharep, function(i){
     trainID <- caret::createDataPartition(y, p = 4/5, list = FALSE)
@@ -380,6 +377,14 @@ for (i in seq_len(length(runNames))){
     train_x <- selectedx[trainID, ]
     test_y <- y[setdiff(seq_len(length(y)), trainID)]
     test_x <- selectedx[setdiff(seq_len(length(y)), trainID), ]
+    
+    if(length(unique(test_y))==1){
+      trainID <- caret::createDataPartition(y, p = 4/5, list = FALSE)
+      train_y <- y[trainID]
+      train_x <- selectedx[trainID, ]
+      test_y <- y[setdiff(seq_len(length(y)), trainID)]
+      test_x <- selectedx[setdiff(seq_len(length(y)), trainID), ]
+    }
     
     foldid <- caret::createFolds(train_y, k = nfolds, list = FALSE)
     
@@ -389,9 +394,12 @@ for (i in seq_len(length(runNames))){
     devList <- sapply(cvfit[[3]], function(fit){
       
       pred <- c(stats::predict(fit, newx=test_x, s="lambda.min"))
+
+      # auc<- pROC::auc(as.numeric(factor(test_y, levels = levels(test_y), ordered = TRUE)),
+      #                 pred)
       
-      auc<- pROC::auc(as.numeric(factor(test_y, levels = levels(test_y), ordered = TRUE)),
-                      pred)
+      auc <- pROC::auc(as.numeric(test_y == 1),
+                       pred, direction = "<")
       
       c(auc, fit$lambda.min)
       
@@ -404,7 +412,7 @@ for (i in seq_len(length(runNames))){
   # store the results 
   devList <- Reduce("+",alphaList)/nalpharep
   
-  #### 4.4: calculate variable of importance by fitting all variables to the model via bootstrapping #### 
+  #### 3.4: calculate variable of importance by fitting all variables to the model via bootstrapping #### 
   bsList <- lapply(1:1000, function(i) 
     variable_of_importance(devList = devList, x = x, y = y, family = "binomial"))
   # calculate the average size of models
@@ -413,8 +421,8 @@ for (i in seq_len(length(runNames))){
   VarSelected <- names(sort(table(unlist(bsList)), decreasing = TRUE)[seq_len(modelSize)])
   
   
-  #### 4.5: calculate the AUC confidence interval via smoothed bootstrapping 
-  dataFinal <- data.frame(y, x[,c(VarSelected)])
+  #### 3.5: calculate the AUC confidence interval via smoothed bootstrapping 
+  dataFinal <- data.frame(y = as.factor(y), x[,c(VarSelected)])
   set.seed(seed)
   aucList <- kernelboot(dataFinal, function(x) 
     smooth_bootstrap(x, devList = devList), R=nrep, kernel = "gaussian")
@@ -424,17 +432,21 @@ for (i in seq_len(length(runNames))){
         function(x) quantile(x, c(0.5, 0.025, 0.975))) %>% round(3)
   
   # draw the boxplot of scores and AUC curves 
-  p <- ggboxroc(aucList = aucList)
+  p <- ggboxroc(aucList = aucList, labels = c("SD/PD", "CR/PR"))
   
   dir.create("output/models/")
   if(identical(runName, c('Bulk','Mean DSP')) == TRUE){
-    save(p, aucList, file = file.path("output/models/", "model35.rdata"))
+    save(p, aucList, file = file.path("output/models/", "modelboth.rdata"))
     res <- scores_calculator(devList, x[,c(VarSelected)], y, family = "binomial")
-    save(res, VarSelected, file = file.path("output/models/", "scores_model35.rdata"))
+    save(res, VarSelected, x, y, file = file.path("output/models/", "scores_modelboth.rdata"))
   } else if (runName == c('Mean DSP') ){
-    save(p, aucList, file = file.path("output/models/", "model7.rdata"))
+    save(p, aucList, file = file.path("output/models/", "modelDSP.rdata"))
+    res <- scores_calculator(devList, x[,c(VarSelected)], y, family = "binomial")
+    save(res, VarSelected, file = file.path("output/models/", "scores_modelDSP.rdata"))
   } else {
-    save(p, aucList, file = file.path("output/models/", "model60.rdata"))
+    save(p, aucList, file = file.path("output/models/", "modelRNA.rdata"))
+    res <- scores_calculator(devList, x[,c(VarSelected)], y, family = "binomial")
+    save(res, VarSelected, file = file.path("output/models/", "scores_modelRNA.rdata"))
   }
 }
 
@@ -444,21 +456,21 @@ rm(list = c("p", "aucList", "runNames", "runName", "alphaLength",
             "standbylist", "VarSelected", "modelSize", "i", "devList", "alphaList"))
 
 
-#### 4.6: create Figure 4 containing boxplots of scores and ROC curves for three models 
+#### 3.6: create Figure 4 containing boxplots of scores and ROC curves for three models 
 # load fitted model for DSP and Bulk DNA
-load(file = file.path("output/models", "model35.rdata"))
+load(file = file.path("output/models", "modelboth.rdata"))
 p1 <- p
 apply(do.call(rbind, aucList[[2]][,5]), 2, 
       function(x) quantile(x, c(0.5, 0.025, 0.975))) %>% round(3)
 
 # load fitted model for DSP only
-load(file = file.path("output/models", "model7.rdata"))
+load(file = file.path("output/models", "modelDSP.rdata"))
 p2 <- p
 apply(do.call(rbind, aucList[[2]][,5]), 2, 
       function(x) quantile(x, c(0.5, 0.025, 0.975))) %>% round(3)
 
 # load fitted model for Bulk DNA only
-load(file = file.path("output/models", "model60.rdata"))
+load(file = file.path("output/models", "modelRNA.rdata"))
 p3 <- p
 apply(do.call(rbind, aucList[[2]][,5]), 2, 
       function(x) quantile(x, c(0.5, 0.025, 0.975))) %>% round(3)
@@ -487,10 +499,12 @@ ggsave(p_all, filename = file.path("figs", "jpg", "Figure4.jpg"),
 rm(list = c("p", "p1", "p2", "p3", "p_all", "aucList"))
 
 ################################################################
-#### Section 6: Selecting an efficient subset of predictors ####
-#### 6.1: calculate AUC for numbers of predictor ranging from 4 to 13
+#### Section 4: Selecting an efficient subset of predictors ####
+#### 4.1: calculate AUC for numbers of predictor ranging from 4 to 13
+load(file = file.path("output/models", "scores_modelboth.rdata"))
 if (FALSE){ 
   # !!! this chunk of code takes very long time to run. Output were saved in /ouput folder.  
+  dir.create("output/permutations")
   for(k in 4:13){
     if (k > 7){
       genes = replicate(1000000, sample(1:nrow(res[[1]]), k))
@@ -505,7 +519,7 @@ if (FALSE){
       scoresVar <- apply(x[, as.character(coefVar$gene), drop = F], 1, 
                          function(y) {sum(y * coefVar$coefficient)})
       
-      rocobj <- roc(y==levels(y)[1], scoresVar)
+      rocobj <- roc(as.numeric(y==1), scoresVar, direction = "<")
       if(all(is.na(rocobjsave))==TRUE){
         rocobjsave[[1]] <- list(rocobj, coefVar$gene)
       } else if(any(is.na(rocobjsave))==TRUE) {
@@ -522,7 +536,7 @@ if (FALSE){
   }
 }
 
-#### 6.2: select subsets of predictors with top 10 highest AUC
+#### 4.2: select subsets of predictors with top 10 highest AUC
 x <- as.data.frame(t(data[targetannot$run %in% c('Bulk','Mean DSP'), ]))
 x[is.na(x)] <- 0
 x <- as.matrix(x)
@@ -543,13 +557,13 @@ for (k in 4:13){
   scoresVar <- apply(x[, as.character(coefVar$gene), drop = F], 1, 
                      function(y) {sum(y * coefVar$coefficient)})
   
-  rocobj <- roc(y==levels(y)[1], scoresVar)
+  rocobj <- roc(as.numeric(y==1), scoresVar, direction = "<")
   
   save(rocobj, genesList, 
        file = file.path("output/top10subsets", paste0(k,"gene.rdata")))
 }
 
-#### 6.3: generate heatmap of an efficient subset of predictors
+#### 4.3: generate heatmap of an efficient subset of predictors
 gene_df <- lapply(4:13, function(k){
   load(file.path("output","top10subsets", paste0(k,"gene.rdata")))
   return(as.character(genesList))
@@ -631,7 +645,7 @@ rm(list = c("annot_row", "annotation_colors", "aucmat", "coefVar", "df",
             "auc", "aucindex", "aucvec", "dspind", "gene6",
             "genesall", "genesList", "k", "scoresVar"))
 
-#### 6.4: evaluate the performances of K predictors from 4 to 13
+#### 4.4: evaluate the performances of K predictors from 4 to 13
 # extract results from saved rdata files
 resmat <- c()
 aucvalvec <- c()
@@ -698,7 +712,7 @@ rm(list = c("aucList", "dataFinal", "p", "resmat", "rocobj", "tmp",
             "aucvalvec", "genesList", "ind", "k"))
 
 
-#### 6.5: calculate 95% CI of AUC for 6 predictors 
+#### 4.5: calculate 95% CI of AUC for 6 predictors 
 # generate the boxplot of scores and ROC curves, figure 7 
 gene6 <- c("GZMH", "ID4", "Mean_MSH2_Melanocyte", 
             "Mean_PhosphoSTAT3_CD68", "MGMT", "NRDE2")
@@ -709,7 +723,7 @@ aucList <- kernelboot(dataFinal, function(x)
   smooth_bootstrap_selected(x, testfit = res[[3]], gene6), 
   R=nrep, kernel = "gaussian")
 
-p <- ggboxroc(aucList = aucList)
+p <- ggboxroc(aucList = aucList, labels = c("SD/PD", "CR/PR"))
 
 # save the results for later use
 save(p, aucList, file = file.path("output", "models", "model6.rdata"))
@@ -733,7 +747,7 @@ ci.coords(aucList[[1]][[2]], x=0.95, input = "sensitivity", ret="specificity")
 
 rm(list = c("p_comb", "p", "aucList", "dataFinal"))
 
-#### 6.6: calculate the variable of importance
+#### 4.6: calculate the variable of importance
 varimp <- varimpAUC(newx = x[, VarSelected], 
                     y = y, 
                     coefmat = res[[3]], 
@@ -743,24 +757,24 @@ varimp <- varimpAUC(newx = x[, VarSelected],
 rm(list = c("varimp", "res", "VarSelected", "y"))
 
 ###############################################################
-#### Section 7: evaluate 6 predictors on clinical benefit ####
-#### 7.1: load data and define the clinical benefit outcome
+#### Section 5: evaluate 6 predictors on clinical benefit ####
+#### 5.1: load data and define the clinical benefit outcome
 load(file.path("output/models/", "scores_model35.rdata"))
 gene6 <- c("GZMH", "ID4", "Mean_MSH2_Melanocyte", 
            "Mean_PhosphoSTAT3_CD68", "MGMT", "NRDE2")
 
-#### 7.2: prepare data for fitting the logistic regressions
+#### 5.2: prepare data for fitting the logistic regressions
 y <- factor(annot$Clinical.Benefit, levels = c("NO", "CB"))
 dataFinal <- data.frame(y, x[,gene6])
 
-#### 7.3: calculate the 95% CI in AUC
+#### 5.3: calculate the 95% CI in AUC
 set.seed(seed)
 aucList <- kernelboot(dataFinal, function(x) 
   smooth_bootstrap_selected(x, testfit = res[[3]], gene6), 
   R=nrep, kernel = "gaussian")
 
-#### 7.4: save the boxplot of scores and ROC curves as figure 8
-p <- ggboxroc(aucList = aucList)
+#### 5.4: save the boxplot of scores and ROC curves as figure 8
+p <- ggboxroc(aucList = aucList, labels = c("No", "Yes"))
 
 p_comb <- p[[1]]+p[[2]]
 
@@ -779,24 +793,24 @@ apply(do.call(rbind, aucList[[2]][,5]), 2,
 rm(list = c("p_comb", "p", "aucList"))
 
 ##################################################################
-#### Section 8: evaluate 6 predictors on survival data, VITAL ####
-#### 8.1: load data and define survival outcome
+#### Section 6: evaluate 6 predictors on survival data, VITAL ####
+#### 6.1: load data and define survival outcome
 y <- Surv(time = annot$OS_FROM_START_OF_ITX, event = annot$VITAL)
 
 # calculate the best cutoff
 load(file.path("output", "models", "model6.rdata"))
 cutoff <- coords(aucList[[1]][[2]], "best")[1]
 
-#### 8.2: prepare data for survival analysis 
+#### 6.2: prepare data for survival analysis 
 dat <- data.frame(y = y, 
                   scores = aucList[[1]][[4]])
 
-#### 8.3: run the survival analysis 
+#### 6.3: run the survival analysis 
 # use cutoff to create two groups, low an high
 dat$group <- factor(dat$scores > unname(unlist(cutoff)), labels = c("Low", "High"))
 fit <- survfit(y ~ group, data = dat)
 
-#### 8.4: save the survival plot as figure 9
+#### 6.4: save the survival plot as figure 9
 ggsurvplot(fit,
            palette = c("red", "darkblue"), 
            size = 1,  # change line size
@@ -822,15 +836,15 @@ rm(list = c("fit", "p", "aucList", "dat", "y"))
 
 
 ################################################################################
-#### Section 9: evaluate 6 predictors on survival data, PROG_STATUS_BY_SCAN ####
-#### 9.1: load new data for 2nd survival analysis
+#### Section 7: evaluate 6 predictors on survival data, PROG_STATUS_BY_SCAN ####
+#### 7.1: load new data for 2nd survival analysis
 annot2 <- as.data.frame(read_excel('data/graphing_adjusted_log2_expression_data_WITH DSP.xlsx', 
                                    sheet = "Transposed Annotations"))
 stopifnot(identical(annot$ID, annot2$ID...1))
 annot$PFS_BY_SCAN  <- annot2$PFS_BY_SCAN
 annot$PROG_STATUS_BY_SCAN  <- annot2$PROG_STATUS_BY_SCAN 
 
-#### 9.2: prepare data for survival analysis 
+#### 7.2: prepare data for survival analysis 
 load(file.path("output", "models", "model6.rdata"))
 y <- Surv(time = annot$PFS_BY_SCAN, event = annot$PROG_STATUS_BY_SCAN)
 dat <- data.frame(y = y, 
@@ -839,10 +853,10 @@ dat <- data.frame(y = y,
 # use the same cutoff from above
 dat$group <- factor(dat$scores > unname(unlist(cutoff)), labels = c("Low", "High"))
 
-#### 9.3: run the survival analysis 
+#### 7.3: run the survival analysis 
 fit <- survfit(y ~ group, data = dat)
 
-#### 9.4: save the survival plot as figure 10
+#### 7.4: save the survival plot as figure 10
 ggsurvplot(fit,
            palette = c("red", "darkblue"), 
            size = 1,  # change line size
