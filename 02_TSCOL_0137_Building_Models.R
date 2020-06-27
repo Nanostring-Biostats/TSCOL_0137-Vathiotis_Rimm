@@ -705,7 +705,7 @@ rm(list = c("aucList", "dataFinal", "p", "resmat", "rocobj", "tmp",
 
 #### 4.5: calculate 95% CI of AUC for 6 predictors 
 # generate the boxplot of scores and ROC curves, figure 7 
-gene6 <- c("GZMH", "ID4", "Mean_MSH2_Melanocyte", 
+gene6 <- c("IER3", "ID4", "Mean_MSH2_Melanocyte", 
             "Mean_PhosphoSTAT3_CD68", "MGMT", "NRDE2")
 
 dataFinal <- data.frame(y, x[, gene6])
