@@ -597,7 +597,7 @@ annotation_colors = list(
   Data = c(`Bulk RNA`="#000080", `GeoMx DSP`="#F5C242"))
 
 dspind <- grep("DSP:", rownames(df))
-rownames(df)[dspind] <- c("MSH2 in S100c", 
+rownames(df)[dspind] <- c("MSH2 in S100/HMB45", 
                           "PhosphoSTAT3 in CD68",
                           "PhosphoSTAT5 in CD68")
 row.names(annot_row) <- rownames(df)
