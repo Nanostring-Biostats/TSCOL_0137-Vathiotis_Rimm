@@ -643,7 +643,7 @@ aucvalvec <- c()
 for(k in 4:13){
   load(file.path("output","top10subsets", paste0(k,"gene.rdata")))
   print(length(genesList))
-  dataFinal <- data.frame(y, x[,as.character(genesList)])
+  dataFinal <- data.frame(y = as.factor(y), x[,as.character(genesList)])
   set.seed(seed)
   aucList <- kernelboot(dataFinal, function(x) 
     smooth_bootstrap_selected(x, testfit = res[[3]], genesList), 
@@ -708,7 +708,7 @@ rm(list = c("aucList", "dataFinal", "p", "resmat", "rocobj", "tmp",
 gene6 <- c("IER3", "ID4", "Mean_MSH2_Melanocyte", 
             "Mean_PhosphoSTAT3_CD68", "MGMT", "NRDE2")
 
-dataFinal <- data.frame(y, x[, gene6])
+dataFinal <- data.frame(y = as.factor(y), x[, gene6])
 set.seed(seed)
 aucList <- kernelboot(dataFinal, function(x) 
   smooth_bootstrap_selected(x, testfit = res[[3]], gene6), 
@@ -755,8 +755,7 @@ gene6 <- c("IER3", "ID4", "Mean_MSH2_Melanocyte",
            "Mean_PhosphoSTAT3_CD68", "MGMT", "NRDE2")
 
 #### 5.2: prepare data for fitting the logistic regressions
-y <- factor(annot$Clinical.Benefit, levels = c("NO", "CB"))
-dataFinal <- data.frame(y, x[,gene6])
+dataFinal <- data.frame(y = factor(as.numeric(annot$Clinical.Benefit=="CB")), x[,gene6])
 
 #### 5.3: calculate the 95% CI in AUC
 set.seed(seed)
