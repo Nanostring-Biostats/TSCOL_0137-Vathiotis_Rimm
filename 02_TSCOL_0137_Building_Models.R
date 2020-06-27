@@ -506,7 +506,7 @@ if (FALSE){
   # !!! this chunk of code takes very long time to run. Output were saved in /ouput folder.  
   dir.create("output/permutations")
   for(k in 4:13){
-    if (k > 7){
+    if (k > 5){
       genes = replicate(1000000, sample(1:nrow(res[[1]]), k))
       genes = genes[, !duplicated(t(genes))]
     } else{
@@ -531,18 +531,13 @@ if (FALSE){
         }
       }
     }
-    dir.create("output/permutations")
-    save(rocobjsave, genesList, file = file.path("output/permutations", paste0(k,".rdata")))
+    save(rocobjsave, file = file.path("output/permutations", paste0(k,".rdata")))
   }
 }
 
 #### 4.2: select subsets of predictors with top 10 highest AUC
-x <- as.data.frame(t(data[targetannot$run %in% c('Bulk','Mean DSP'), ]))
-x[is.na(x)] <- 0
-x <- as.matrix(x)
-y <- annot$Response.NS 
 # load res for later use
-load(file.path("output/models/", "scores_model35.rdata")) 
+load(file.path("output/models/", "scores_modelboth.rdata")) 
 dir.create("output/top10subsets")
 
 for (k in 4:13){
