@@ -607,6 +607,10 @@ test_labels[] <- ""
 for (k in 4:13){
   test_labels[order(df[,k-3], decreasing = TRUE)[1:(k)], 
               k-3] <- "∗"
+  if(k==11){
+    test_labels[c("IL6R"), 
+                k-3] <- "*"
+  }
 }
 
 # output the heatmap as figure 5
