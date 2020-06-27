@@ -750,8 +750,8 @@ rm(list = c("varimp", "res", "VarSelected", "y"))
 ###############################################################
 #### Section 5: evaluate 6 predictors on clinical benefit ####
 #### 5.1: load data and define the clinical benefit outcome
-load(file.path("output/models/", "scores_model35.rdata"))
-gene6 <- c("GZMH", "ID4", "Mean_MSH2_Melanocyte", 
+load(file.path("output/models/", "scores_modelboth.rdata"))
+gene6 <- c("IER3", "ID4", "Mean_MSH2_Melanocyte", 
            "Mean_PhosphoSTAT3_CD68", "MGMT", "NRDE2")
 
 #### 5.2: prepare data for fitting the logistic regressions
