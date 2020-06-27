@@ -597,9 +597,9 @@ annotation_colors = list(
   Data = c(`Bulk RNA`="#000080", `GeoMx DSP`="#F5C242"))
 
 dspind <- grep("DSP:", rownames(df))
-rownames(df)[dspind] <- c("B7H4 in S100/HMB45", 
-                          "MSH2 in S100/HMB45",
-                          "PhosphoSTAT3 in CD68")
+rownames(df)[dspind] <- c("MSH2 in S100c", 
+                          "PhosphoSTAT3 in CD68",
+                          "PhosphoSTAT5 in CD68")
 row.names(annot_row) <- rownames(df)
 test_labels <- df
 test_labels[] <- ""
@@ -607,10 +607,6 @@ test_labels[] <- ""
 for (k in 4:13){
   test_labels[order(df[,k-3], decreasing = TRUE)[1:(k)], 
               k-3] <- "∗"
-  if(k==12){
-    test_labels["MICB", k-3]<-""
-    test_labels["B7H4 in S100/HMB45", k-3]<-"*"
-  }
 }
 
 # output the heatmap as figure 5
