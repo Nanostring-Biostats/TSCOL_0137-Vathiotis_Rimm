@@ -507,7 +507,8 @@ if (FALSE){
   dir.create("output/permutations")
   for(k in 4:13){
     if (k > 5){
-      genes = replicate(1000000, sample(1:nrow(res[[1]]), k))
+      set.seed(seed)
+      genes = replicate(2000000, sample(1:nrow(res[[1]]), k))
       genes = genes[, !duplicated(t(genes))]
     } else{
       genes = combn(1:nrow(res[[1]]), k)
