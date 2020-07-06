@@ -588,7 +588,7 @@ df <- df[c(rownames(df)[-grep("DSP:", rownames(df))],
            rownames(df)[grep("DSP:", rownames(df))]), ]
 
 # the top 6 most frequently selected predictors
-gene6 <- rownames(df)[order(df[, "K = 6"], decreasing = TRUE)[1:6]]
+gene8 <- rownames(df)[order(df[, "K = 8"], decreasing = TRUE)[1:8]]
 
 annot_row <- 
   data.frame(
@@ -634,7 +634,7 @@ ggsave(p, filename = file.path("figs", "jpg", "Figure5.jpg"),
 
 rm(list = c("annot_row", "annotation_colors", "aucmat", "coefVar", "df",
             "gene_df", "p", "rocobj", "rocobjsave", "test_labels", 
-            "auc", "aucindex", "aucvec", "dspind", "gene6",
+            "auc", "aucindex", "aucvec", "dspind", "gene8",
             "genesall", "genesList", "k", "scoresVar"))
 
 #### 4.4: evaluate the performances of K predictors from 4 to 13
