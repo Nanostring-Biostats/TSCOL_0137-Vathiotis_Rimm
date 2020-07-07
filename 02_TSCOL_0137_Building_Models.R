@@ -607,8 +607,17 @@ test_labels <- df
 test_labels[] <- ""
 
 for (k in 4:13){
-  test_labels[order(df[,k-3], decreasing = TRUE)[1:(k)], 
-              k-3] <- "∗"
+  load(file.path("output","top10subsets", paste0(k,"gene.rdata")))
+  if("Mean_MSH2_Melanocyte" %in% genesList){
+    genesList <- c( setdiff(genesList, "Mean_MSH2_Melanocyte"), "MSH2 in S100/HMB45")
+  } 
+  if ("Mean_PhosphoSTAT3_CD68" %in% genesList){
+    genesList <- c( setdiff(genesList, "Mean_PhosphoSTAT3_CD68"), "PhosphoSTAT3 in CD68")
+  } 
+  if ("Mean_PhosphoSTAT5_CD68" %in% genesList){
+    genesList <- c( setdiff(genesList, "Mean_PhosphoSTAT5_CD68"), "PhosphoSTAT5 in CD68")
+  }
+  test_labels[genesList, k-3] <- "∗"
 }
 
 # output the heatmap as figure 5
