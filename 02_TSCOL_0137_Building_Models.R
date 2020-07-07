@@ -736,19 +736,19 @@ rm(list = c("aucList", "dataFinal", "p", "resmat", "rocobj", "tmp",
 
 #### 4.5: calculate 95% CI of AUC for 6 predictors 
 # generate the boxplot of scores and ROC curves, figure 7 
-gene6 <- c("IER3", "ID4", "Mean_MSH2_Melanocyte", 
-            "Mean_PhosphoSTAT3_CD68", "MGMT", "NRDE2")
+load(file.path("output","top10subsets", paste0(8,"gene.rdata")))
+gene8 <- genesList
 
-dataFinal <- data.frame(y = as.factor(y), x[, gene6])
+dataFinal <- data.frame(y = as.factor(y), x[, gene8])
 set.seed(seed)
 aucList <- kernelboot(dataFinal, function(x) 
-  smooth_bootstrap_selected(x, testfit = res[[3]], gene6), 
+  smooth_bootstrap_selected(x, testfit = res[[3]], gene8), 
   R=nrep, kernel = "gaussian")
 
 p <- ggboxroc(aucList = aucList, labels = c("SD/PD", "CR/PR"))
 
 # save the results for later use
-save(p, aucList, file = file.path("output", "models", "model6.rdata"))
+save(p, aucList, file = file.path("output", "models", "model8.rdata"))
 
 # save the boxplot of scores and ROC curves as figure 7
 p_comb <- p[[1]] + p[[2]]
@@ -782,16 +782,16 @@ rm(list = c("varimp", "res", "VarSelected", "y"))
 #### Section 5: evaluate 6 predictors on clinical benefit ####
 #### 5.1: load data and define the clinical benefit outcome
 load(file.path("output/models/", "scores_modelboth.rdata"))
-gene6 <- c("IER3", "ID4", "Mean_MSH2_Melanocyte", 
-           "Mean_PhosphoSTAT3_CD68", "MGMT", "NRDE2")
+load(file.path("output","top10subsets", paste0(8,"gene.rdata")))
+gene8 <- genesList
 
 #### 5.2: prepare data for fitting the logistic regressions
-dataFinal <- data.frame(y = factor(as.numeric(annot$Clinical.Benefit=="CB")), x[,gene6])
+dataFinal <- data.frame(y = factor(as.numeric(annot$Clinical.Benefit=="CB")), x[,gene8])
 
 #### 5.3: calculate the 95% CI in AUC
 set.seed(seed)
 aucList <- kernelboot(dataFinal, function(x) 
-  smooth_bootstrap_selected(x, testfit = res[[3]], gene6), 
+  smooth_bootstrap_selected(x, testfit = res[[3]], gene8), 
   R=nrep, kernel = "gaussian")
 
 #### 5.4: save the boxplot of scores and ROC curves as figure 8
@@ -819,7 +819,7 @@ rm(list = c("p_comb", "p", "aucList"))
 y <- Surv(time = annot$OS_FROM_START_OF_ITX, event = annot$VITAL)
 
 # calculate the best cutoff
-load(file.path("output", "models", "model6.rdata"))
+load(file.path("output", "models", "model8.rdata"))
 cutoff <- coords(aucList[[1]][[2]], "best")[1]
 
 #### 6.2: prepare data for survival analysis 
@@ -866,7 +866,7 @@ annot$PFS_BY_SCAN  <- annot2$PFS_BY_SCAN
 annot$PROG_STATUS_BY_SCAN  <- annot2$PROG_STATUS_BY_SCAN 
 
 #### 7.2: prepare data for survival analysis 
-load(file.path("output", "models", "model6.rdata"))
+load(file.path("output", "models", "model8.rdata"))
 y <- Surv(time = annot$PFS_BY_SCAN, event = annot$PROG_STATUS_BY_SCAN)
 dat <- data.frame(y = y, 
                   scores = aucList[[1]][[4]])
