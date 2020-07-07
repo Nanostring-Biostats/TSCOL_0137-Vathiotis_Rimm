@@ -773,7 +773,7 @@ rm(list = c("p_comb", "p", "aucList", "dataFinal"))
 varimp <- varimpAUC(newx = x[, VarSelected], 
                     y = y, 
                     coefmat = res[[3]], 
-                    genes = gsub("DSP: ", "Mean_", gene6), 
+                    genes = gsub("DSP: ", "Mean_", gene8), 
                     nperm = 1000)
 
 rm(list = c("varimp", "res", "VarSelected", "y"))
