@@ -839,6 +839,7 @@ ggsurvplot(fit,
            break.time.by = 250, # break time axis by 250
            conf.int = FALSE, # Add confidence interval
            pval = TRUE, # Add p-value
+           pval.coord = c(50, 0.10), 
            legend.title = "Group", 
            legend.labs = c(paste0("Low (n = ", table(dat$group)['Low'], ")"),
                            paste0("High (n = ", table(dat$group)['High'], ")"))) + 
@@ -885,6 +886,7 @@ ggsurvplot(fit,
            break.time.by = 250, # break time axis by 250
            conf.int = FALSE, # Add confidence interval
            pval = TRUE, # Add p-value
+           pval.coord = c(50, 0.10), 
            legend.title = "Group", 
            legend.labs = c(paste0("Low (n = ", table(dat$group)['Low'], ")"),
                            paste0("High (n = ", table(dat$group)['High'], ")")))+ 
