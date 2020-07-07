@@ -546,8 +546,28 @@ for (k in 4:13){
   aucvec <- sapply(rocobjsave, function(x) x[[1]]$auc)
   aucindex <- order(aucvec, decreasing =TRUE)[1:10]
   aucmat <- sapply(rocobjsave[aucindex], function(x) x[[2]])
-  genesList <- names(table(c(aucmat))[order(table(c(aucmat)), decreasing = TRUE)][1:k])
-  
+  minvalue <- min(table(c(aucmat))[order(table(c(aucmat)), decreasing = TRUE)][1:k])
+
+  if( length(which(table(c(aucmat))>=minvalue)) > k ){
+    rocobjmat <- NULL
+    genesListtmp <- names(table(c(aucmat))[which(table(c(aucmat)) > minvalue)])
+    for(var in names(which(table(c(aucmat))==minvalue))){
+      coefVar <- res[[1]][which(res[[1]]$gene %in% c(genesListtmp, var)),]
+      
+      scoresVar <- apply(x[, as.character(coefVar$gene), drop = F], 1, 
+                         function(y) {sum(y * coefVar$coefficient)})
+      rocobj <- roc(as.numeric(y==1), scoresVar, direction = "<")
+      
+      rocobjmat <- rbind(rocobjmat, data.frame(auc = rocobj$auc, var = var))
+    }
+    print(k)
+    print(rocobjmat)
+    genesList <- c(genesListtmp, as.character(rocobjmat$var[which.max(rocobjmat$auc)]))
+    remove(genesListtmp)
+  } else {
+    genesList <- names(table(c(aucmat))[order(table(c(aucmat)), decreasing = TRUE)][1:k])
+  }
+    
   coefVar <- res[[1]][which(res[[1]]$gene %in% genesList),]
   
   scoresVar <- apply(x[, as.character(coefVar$gene), drop = F], 1, 
