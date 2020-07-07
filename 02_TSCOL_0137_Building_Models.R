@@ -588,7 +588,8 @@ df <- df[c(rownames(df)[-grep("DSP:", rownames(df))],
            rownames(df)[grep("DSP:", rownames(df))]), ]
 
 # the top 6 most frequently selected predictors
-gene8 <- rownames(df)[order(df[, "K = 8"], decreasing = TRUE)[1:8]]
+load(file.path("output","top10subsets", paste0(8,"gene.rdata")))
+gene8 <- genesList
 
 annot_row <- 
   data.frame(
