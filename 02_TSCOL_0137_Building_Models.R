@@ -608,8 +608,8 @@ df <- df[c(rownames(df)[-grep("DSP:", rownames(df))],
            rownames(df)[grep("DSP:", rownames(df))]), ]
 
 # the top 6 most frequently selected predictors
-load(file.path("output","top10subsets", paste0(8,"gene.rdata")))
-gene8 <- genesList
+gene8 <- c("CCNO", "ID4", "IER3", "Mean_MSH2_Melanocyte", 
+           "MGMT", "NRDE2", "TNFAIP6", "Mean_PhosphoSTAT3_CD68")
 
 annot_row <- 
   data.frame(
@@ -736,8 +736,8 @@ rm(list = c("aucList", "dataFinal", "p", "resmat", "rocobj", "tmp",
 
 #### 4.5: calculate 95% CI of AUC for 6 predictors 
 # generate the boxplot of scores and ROC curves, figure 7 
-load(file.path("output","top10subsets", paste0(8,"gene.rdata")))
-gene8 <- genesList
+gene8 <- c("CCNO", "ID4", "IER3", "Mean_MSH2_Melanocyte", 
+           "MGMT", "NRDE2", "TNFAIP6", "Mean_PhosphoSTAT3_CD68")
 
 dataFinal <- data.frame(y = as.factor(y), x[, gene8])
 set.seed(seed)
@@ -782,8 +782,9 @@ rm(list = c("varimp", "res", "VarSelected", "y"))
 #### Section 5: evaluate 6 predictors on clinical benefit ####
 #### 5.1: load data and define the clinical benefit outcome
 load(file.path("output/models/", "scores_modelboth.rdata"))
-load(file.path("output","top10subsets", paste0(8,"gene.rdata")))
-gene8 <- genesList
+gene8 <- c("CCNO", "ID4", "IER3", "Mean_MSH2_Melanocyte", 
+           "MGMT", "NRDE2", "TNFAIP6", "Mean_PhosphoSTAT3_CD68")
+
 
 #### 5.2: prepare data for fitting the logistic regressions
 dataFinal <- data.frame(y = factor(as.numeric(annot$Clinical.Benefit=="CB")), x[,gene8])
