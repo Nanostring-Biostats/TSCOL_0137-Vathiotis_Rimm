@@ -831,6 +831,8 @@ dat <- data.frame(y = y,
 # use cutoff to create two groups, low an high
 dat$group <- factor(dat$scores > unname(unlist(cutoff)), labels = c("Low", "High"))
 fit <- survfit(y ~ group, data = dat)
+cox <- coxph(y ~ group, data = dat)
+summary(cox)
 
 #### 6.4: save the survival plot as figure 9
 ggsurvplot(fit,
@@ -878,6 +880,8 @@ dat$group <- factor(dat$scores > unname(unlist(cutoff)), labels = c("Low", "High
 
 #### 7.3: run the survival analysis 
 fit <- survfit(y ~ group, data = dat)
+cox <- coxph(y ~ group, data = dat)
+summary(cox)
 
 #### 7.4: save the survival plot as figure 10
 ggsurvplot(fit,
