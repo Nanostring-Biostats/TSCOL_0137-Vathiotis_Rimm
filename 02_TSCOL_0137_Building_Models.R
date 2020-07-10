@@ -609,7 +609,7 @@ df <- df[c(rownames(df)[-grep("DSP:", rownames(df))],
 
 # the top 6 most frequently selected predictors
 gene8 <- c("CCNO", "ID4", "IER3", "Mean_MSH2_Melanocyte", 
-           "MGMT", "NRDE2", "TNFAIP6", "Mean_PhosphoSTAT3_CD68")
+           "MGMT", "NRDE2", "TNFAIP6", "IL2RB")
 
 annot_row <- 
   data.frame(
@@ -737,7 +737,7 @@ rm(list = c("aucList", "dataFinal", "p", "resmat", "rocobj", "tmp",
 #### 4.5: calculate 95% CI of AUC for 6 predictors 
 # generate the boxplot of scores and ROC curves, figure 7 
 gene8 <- c("CCNO", "ID4", "IER3", "Mean_MSH2_Melanocyte", 
-           "MGMT", "NRDE2", "TNFAIP6", "Mean_PhosphoSTAT3_CD68")
+           "MGMT", "NRDE2", "TNFAIP6", "IL2RB")
 
 dataFinal <- data.frame(y = as.factor(y), x[, gene8])
 set.seed(seed)
@@ -783,7 +783,7 @@ rm(list = c("varimp", "res", "VarSelected", "y"))
 #### 5.1: load data and define the clinical benefit outcome
 load(file.path("output/models/", "scores_modelboth.rdata"))
 gene8 <- c("CCNO", "ID4", "IER3", "Mean_MSH2_Melanocyte", 
-           "MGMT", "NRDE2", "TNFAIP6", "Mean_PhosphoSTAT3_CD68")
+           "MGMT", "NRDE2", "TNFAIP6", "IL2RB")
 
 
 #### 5.2: prepare data for fitting the logistic regressions
