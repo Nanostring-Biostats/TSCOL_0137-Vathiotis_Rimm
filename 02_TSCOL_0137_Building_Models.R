@@ -394,9 +394,6 @@ for (i in seq_len(length(runNames))){
     devList <- sapply(cvfit[[3]], function(fit){
       
       pred <- c(stats::predict(fit, newx=test_x, s="lambda.min"))
-
-      # auc<- pROC::auc(as.numeric(factor(test_y, levels = levels(test_y), ordered = TRUE)),
-      #                 pred)
       
       auc <- pROC::auc(as.numeric(test_y == 1),
                        pred, direction = "<")
