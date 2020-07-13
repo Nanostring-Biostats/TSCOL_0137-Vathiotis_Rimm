@@ -21,15 +21,16 @@ The code has been test on the following systems:
 Linux: x86_64-pc-linux-gnu (64-bit)
 Windows: x86_64-w64-mingw32/x64 (64-bit)
 
-Users need to install `R` with version of 3.6.3 or higher and the following R packages before running the script. 
+Users need to install `R` with version of 3.6.3 or higher and the following R packages before running the script.   
 
-`
+```
 install.packages(c('readxl', 'ggplot2', 'ggrepel', 'pheatmap', 'survival', 'glmnet', 'DT', 'pROC', 'survminer', 'patchwork', 'glmnetUtils', 'OptimalCutpoints'', 'caret', 'kernelboot'))
-`
+```
+
 However, for the `rsq` package, please make sure you download the `1.1` version from the website here https://cran.r-project.org/src/contrib/Archive/rsq/ followed by installing it using `install.packages("../rsq_1.1.tar.gz", repos = NULL, type = "source")`. 
 
-Below lists the version of all R packages mentioned above. 
-`
+Below lists the version of all R packages mentioned above.   
+```
 kernelboot            caret          lattice OptimalCutpoints      glmnetUtils        patchwork 
    "0.1.7"         "6.0-86"        "0.20-41"          "1.1-4"          "1.1.5"          "1.0.0" 
  survminer           ggpubr         magrittr             pROC               DT           glmnet 
@@ -38,7 +39,7 @@ kernelboot            caret          lattice OptimalCutpoints      glmnetUtils  
   "1.2-18"          "3.1-8"         "1.0.12"          "0.8.2"          "3.3.0"          "1.3.1" 
        rsq 
      "1.1" 
-`
+```
  
 
 **Contact us:**\
