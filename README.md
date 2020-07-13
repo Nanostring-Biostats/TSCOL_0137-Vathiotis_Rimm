@@ -17,9 +17,9 @@ Scripts related to IO 360 and GeoMx DSP analysis of melanoma samples in collabor
 - output\/permutations/\*.rdata: files related to permutation testing based run during analysis for ease of access. Files can be generated on the fly, but these are provided to reduce run time to test specific cases if necessary.
 
 ### Software Requirements
-The code has been test on the following systems:
-Linux: x86_64-pc-linux-gnu (64-bit)
-Windows: x86_64-w64-mingw32/x64 (64-bit)
+The code has been test on the following systems:  
+Linux: x86_64-pc-linux-gnu (64-bit)  
+Windows: x86_64-w64-mingw32/x64 (64-bit)  
 
 Users need to install `R` with version of 3.6.3 or higher and the following R packages before running the script.   
 
