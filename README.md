@@ -24,7 +24,9 @@ Windows: x86_64-w64-mingw32/x64 (64-bit)
 Users need to install `R` with version of 3.6.3 or higher and the following R packages before running the script.   
 
 ```
-install.packages(c('readxl', 'ggplot2', 'ggrepel', 'pheatmap', 'survival', 'glmnet', 'DT', 'pROC', 'survminer', 'patchwork', 'glmnetUtils', 'OptimalCutpoints'', 'caret', 'kernelboot'))
+install.packages(c('readxl', 'ggplot2', 'ggrepel', 'pheatmap', 'survival', 
+'glmnet', 'DT', 'pROC', 'survminer', 'patchwork', 'glmnetUtils', 
+'OptimalCutpoints'', 'caret', 'kernelboot'))
 ```
 
 However, for the `rsq` package, please make sure you download the `1.1` version from the website here https://cran.r-project.org/src/contrib/Archive/rsq/ followed by installing it using `install.packages("../rsq_1.1.tar.gz", repos = NULL, type = "source")`. 
