@@ -607,7 +607,7 @@ rownames(df) <- gsub("Mean_", "DSP: ", genesall)
 df <- df[c(rownames(df)[-grep("DSP:", rownames(df))], 
            rownames(df)[grep("DSP:", rownames(df))]), ]
 
-# the top 6 most frequently selected predictors
+# the top 8 most frequently selected predictors
 gene8 <- c("CCNO", "ID4", "IER3", "Mean_MSH2_Melanocyte", 
            "MGMT", "NRDE2", "TNFAIP6", "IL2RB")
 
@@ -734,7 +734,7 @@ rm(list = c("aucList", "dataFinal", "p", "resmat", "rocobj", "tmp",
             "aucvalvec", "genesList", "ind", "k"))
 
 
-#### 4.5: calculate 95% CI of AUC for 6 predictors 
+#### 4.5: calculate 95% CI of AUC for 8 predictors 
 # generate the boxplot of scores and ROC curves, figure 7 
 gene8 <- c("CCNO", "ID4", "IER3", "Mean_MSH2_Melanocyte", 
            "MGMT", "NRDE2", "TNFAIP6", "IL2RB")
@@ -765,7 +765,8 @@ ggsave(p_comb, filename = file.path("figs", "jpg", "Figure7.jpg"),
 apply(do.call(rbind, aucList[[2]][,5]), 2, 
       function(x) quantile(x, c(0.5, 0.025, 0.975))) %>% round(3)
 
-ci.coords(aucList[[1]][[2]], x=0.95, input = "sensitivity", ret="specificity")
+set.seed(seed)
+ci.coords(aucList[[1]][[2]], x=0.95, input = "sensitivity", ret="specificity") 
 
 rm(list = c("p_comb", "p", "aucList", "dataFinal"))
 
@@ -779,7 +780,7 @@ varimp <- varimpAUC(newx = x[, VarSelected],
 rm(list = c("varimp", "res", "VarSelected", "y"))
 
 ###############################################################
-#### Section 5: evaluate 6 predictors on clinical benefit ####
+#### Section 5: evaluate 8 predictors on clinical benefit ####
 #### 5.1: load data and define the clinical benefit outcome
 load(file.path("output/models/", "scores_modelboth.rdata"))
 gene8 <- c("CCNO", "ID4", "IER3", "Mean_MSH2_Melanocyte", 
@@ -815,7 +816,7 @@ apply(do.call(rbind, aucList[[2]][,5]), 2,
 rm(list = c("p_comb", "p", "aucList"))
 
 ##################################################################
-#### Section 6: evaluate 6 predictors on survival data, VITAL ####
+#### Section 6: evaluate 8 predictors on survival data, VITAL ####
 #### 6.1: load data and define survival outcome
 y <- Surv(time = annot$OS_FROM_START_OF_ITX, event = annot$VITAL)
 
@@ -861,7 +862,7 @@ rm(list = c("fit", "p", "aucList", "dat", "y"))
 
 
 ################################################################################
-#### Section 7: evaluate 6 predictors on survival data, PROG_STATUS_BY_SCAN ####
+#### Section 7: evaluate 8 predictors on survival data, PROG_STATUS_BY_SCAN ####
 #### 7.1: load new data for 2nd survival analysis
 annot2 <- as.data.frame(read_excel('data/graphing_adjusted_log2_expression_data_WITH DSP.xlsx', 
                                    sheet = "Transposed Annotations"))
