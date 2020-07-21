@@ -454,8 +454,8 @@ rm(list = c("p", "aucList", "runNames", "runName", "alphaLength",
 
 
 #### 3.6: create Figure 4 containing boxplots of scores and ROC curves for three models 
-# load fitted model for DSP and Bulk DNA
-load(file = file.path("output/models", "modelboth.rdata"))
+# load fitted model for Bulk DNA only
+load(file = file.path("output/models", "modelRNA.rdata"))
 p1 <- p
 apply(do.call(rbind, aucList[[2]][,5]), 2, 
       function(x) quantile(x, c(0.5, 0.025, 0.975))) %>% round(3)
@@ -466,12 +466,11 @@ p2 <- p
 apply(do.call(rbind, aucList[[2]][,5]), 2, 
       function(x) quantile(x, c(0.5, 0.025, 0.975))) %>% round(3)
 
-# load fitted model for Bulk DNA only
-load(file = file.path("output/models", "modelRNA.rdata"))
+# load fitted model for DSP and Bulk DNA
+load(file = file.path("output/models", "modelboth.rdata"))
 p3 <- p
 apply(do.call(rbind, aucList[[2]][,5]), 2, 
       function(x) quantile(x, c(0.5, 0.025, 0.975))) %>% round(3)
-
 
 p_all <- p1[[1]] + ggtitle(expression(bold("Combined model"))) + 
   theme(plot.title = element_text(hjust = 0.5)) + 
