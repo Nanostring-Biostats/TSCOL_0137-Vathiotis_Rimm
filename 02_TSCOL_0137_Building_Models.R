@@ -764,16 +764,8 @@ apply(do.call(rbind, aucList[[2]][,5]), 2,
 set.seed(seed)
 ci.coords(aucList[[1]][[2]], x=0.95, input = "sensitivity", ret="specificity") 
 
-rm(list = c("p_comb", "p", "aucList", "dataFinal"))
-
-#### 4.6: calculate the variable of importance
-varimp <- varimpAUC(newx = x[, VarSelected], 
-                    y = y, 
-                    coefmat = res[[3]], 
-                    genes = gsub("DSP: ", "Mean_", gene8), 
-                    nperm = 1000)
-
-rm(list = c("varimp", "res", "VarSelected", "y"))
+rm(list = c("p_comb", "p", "aucList", "dataFinal",
+            "varimp", "res", "VarSelected", "y"))
 
 ###############################################################
 #### Section 5: evaluate 8 predictors on clinical benefit ####
