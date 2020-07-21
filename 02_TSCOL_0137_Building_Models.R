@@ -827,15 +827,18 @@ summary(cox)
 ggsurvplot(fit,
            palette = c("red", "darkblue"), 
            size = 1,  # change line size
-           linetype = "strata", # change line type by groups
            break.time.by = 250, # break time axis by 250
            conf.int = FALSE, # Add confidence interval
-           pval = TRUE, # Add p-value
-           pval.coord = c(50, 0.10), 
+           pval = FALSE, # Add p-value
            legend.title = "Group", 
            legend.labs = c(paste0("Low (n = ", table(dat$group)['Low'], ")"),
                            paste0("High (n = ", table(dat$group)['High'], ")"))) + 
-  xlab("Time (days)") + ylab("Overall Survival") 
+  xlab("Time (days)") + ylab("Overall Survival") -> p
+
+p$plot +
+  geom_label(label = expression("logrank "*italic(P)*" < 0.0001"), 
+             x = 250, y = 0.1, label.size = NA)  
+  
 
 ggsave(filename = file.path("figs", "tiff", "Figure9.tiff"), 
        dpi = 400, width = 6, height = 5, units = "in",
@@ -876,7 +879,6 @@ summary(cox)
 ggsurvplot(fit,
            palette = c("red", "darkblue"), 
            size = 1,  # change line size
-           linetype = "strata", # change line type by groups
            break.time.by = 250, # break time axis by 250
            conf.int = FALSE, # Add confidence interval
            pval = TRUE, # Add p-value
@@ -884,7 +886,11 @@ ggsurvplot(fit,
            legend.title = "Group", 
            legend.labs = c(paste0("Low (n = ", table(dat$group)['Low'], ")"),
                            paste0("High (n = ", table(dat$group)['High'], ")")))+ 
-  xlab("Time (days)") + ylab("Progression-Free Survival") 
+  xlab("Time (days)") + ylab("Progression-Free Survival") -> p
+
+p$plot +
+  geom_label(label = expression("logrank "*italic(P)*" < 0.0001"), 
+             x = 250, y = 0.1, label.size = NA) 
 
 ggsave(filename = file.path("figs", "tiff", "Figure10.tiff"), 
        dpi = 400, width = 6, height = 5, units = "in",
