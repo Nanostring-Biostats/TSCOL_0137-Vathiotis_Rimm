@@ -472,11 +472,11 @@ p3 <- p
 apply(do.call(rbind, aucList[[2]][,5]), 2, 
       function(x) quantile(x, c(0.5, 0.025, 0.975))) %>% round(3)
 
-p_all <- p1[[1]] + ggtitle(expression(bold("Combined model"))) + 
+p_all <- p1[[1]] + ggtitle(expression(bold("Bulk RNA model"))) + 
   theme(plot.title = element_text(hjust = 0.5)) + 
   p2[[1]] + ylab("") + ggtitle(expression(bold("DSP model"))) + 
   theme(plot.title = element_text(hjust = 0.5)) + 
-  p3[[1]] + ylab("") + ggtitle(expression(bold("Bulk RNA model"))) + 
+  p3[[1]] + ylab("") + ggtitle(expression(bold("Combined model"))) + 
   theme(plot.title = element_text(hjust = 0.5)) + 
   p1[[2]] + theme(plot.margin = margin(t = -20, unit = "pt")) + 
   p2[[2]] + ylab("") + theme(plot.margin = margin(t = -20, unit = "pt")) + 
@@ -837,15 +837,15 @@ ggsurvplot(fit,
 
 p$plot +
   geom_label(label = expression("logrank "*italic(P)*" < 0.0001"), 
-             x = 250, y = 0.1, label.size = NA)  
+             x = 250, y = 0.08, label.size = NA) -> p
   
 
-ggsave(filename = file.path("figs", "tiff", "Figure9.tiff"), 
+ggsave(p, filename = file.path("figs", "tiff", "Figure9.tiff"), 
        dpi = 400, width = 6, height = 5, units = "in",
        type = "cairo")
-ggsave(filename = file.path("figs", "svg", "Figure9.svg"), 
+ggsave(p, filename = file.path("figs", "svg", "Figure9.svg"), 
        dpi = 400, width = 6, height = 5, units = "in")
-ggsave(filename = file.path("figs", "jpg", "Figure9.jpg"), 
+ggsave(p, filename = file.path("figs", "jpg", "Figure9.jpg"), 
        dpi = 400, width = 6, height = 5, units = "in",
        type = "cairo")
 
@@ -881,8 +881,7 @@ ggsurvplot(fit,
            size = 1,  # change line size
            break.time.by = 250, # break time axis by 250
            conf.int = FALSE, # Add confidence interval
-           pval = TRUE, # Add p-value
-           pval.coord = c(50, 0.10), 
+           pval = FALSE, # Add p-value
            legend.title = "Group", 
            legend.labs = c(paste0("Low (n = ", table(dat$group)['Low'], ")"),
                            paste0("High (n = ", table(dat$group)['High'], ")")))+ 
@@ -890,14 +889,14 @@ ggsurvplot(fit,
 
 p$plot +
   geom_label(label = expression("logrank "*italic(P)*" < 0.0001"), 
-             x = 250, y = 0.1, label.size = NA) 
+             x = 250, y = 0.08, label.size = NA) -> p
 
-ggsave(filename = file.path("figs", "tiff", "Figure10.tiff"), 
+ggsave(p, filename = file.path("figs", "tiff", "Figure10.tiff"), 
        dpi = 400, width = 6, height = 5, units = "in",
        type = "cairo")
-ggsave(filename = file.path("figs", "svg", "Figure10.svg"), 
+ggsave(p, filename = file.path("figs", "svg", "Figure10.svg"), 
        dpi = 400, width = 6, height = 5, units = "in")
-ggsave(filename = file.path("figs", "jpg", "Figure10.jpg"), 
+ggsave(p, filename = file.path("figs", "jpg", "Figure10.jpg"), 
        dpi = 400, width = 6, height = 5, units = "in",
        type = "cairo")
 
