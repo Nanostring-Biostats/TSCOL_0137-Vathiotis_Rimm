@@ -129,6 +129,8 @@ OR_VP <- ggplot(subset(out_R, run %in% c('Bulk','Mean DSP')),
   theme(legend.position = c(0.15,0.85), aspect.ratio = 0.9,
         legend.background = element_rect(color = 'darkgray', fill = 'white'))
 
+write.csv(out_R[which(out_R$FC<=0), ], file = 'output/negative_predictors.csv', row.names = FALSE)
+
 #### 1.3 Save DE Results ####
 dir.create("figs/")
 dir.create("figs/tiff")

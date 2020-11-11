@@ -134,6 +134,60 @@ smooth_bootstrap <- function(dataFinal, devList = devList){
               coords(rocobj,"best", ret=c("ppv","npv", "sensitivity", "specificity"))))
 }
 
+# smooth_bootstrap_diff: calculate the AUC differences via smoothed bootstrapping
+smooth_bootstrap_diff <- function(dataFinal, devList1, devList2, devList3, VarSelected1, VarSelected2, VarSelected3){
+  # extract the optimal alpha and lambda values
+  devList1 <- data.frame(devList1)
+  alphaOpt1 <- max(devList1$alpha[devList1$measure.min == max(devList1$measure.min)])
+  lambdaOpt1 <- devList1$lambda.min[which(devList1$alpha==alphaOpt1)]
+  newX1 <- as.matrix(dataFinal[, -1][, VarSelected1])
+  newY1 <- dataFinal$y
+  fit1 <- glmnet(newX1, newY1,
+                 alpha = alphaOpt1, lambda = lambdaOpt1, family = "binomial")
+  testfit1 <- coef(fit1)
+  scores1 <- apply(newX1, 1, function(vec) {sum(vec[testfit1@i[-1]] * testfit1@x[-1])})
+  rocobj1 <- roc(as.numeric(newY1==1),
+                 scores1, direction = "<")
+  
+  # extract the optimal alpha and lambda values for RNA
+  devList2 <- data.frame(devList2)
+  alphaOpt2 <- max(devList2$alpha[devList2$measure.min == max(devList2$measure.min)])
+  lambdaOpt2 <- devList2$lambda.min[which(devList2$alpha==alphaOpt2)]
+  newX2 <- as.matrix(dataFinal[, -1][, VarSelected2])
+  
+  newY2 <- dataFinal$y
+  fit2 <- glmnet(newX2, newY2,
+                 alpha = alphaOpt2, lambda = lambdaOpt2, family = "binomial")
+  testfit2 <- coef(fit2)
+  scores2 <- apply(newX2, 1, function(vec) {sum(vec[testfit2@i[-1]] * testfit2@x[-1])})
+  rocobj2 <- roc(as.numeric(newY2==1),
+                 scores2, direction = "<")
+  
+  # extract the optimal alpha and lambda values for DSP
+  devList3 <- data.frame(devList3)
+  alphaOpt3 <- max(devList3$alpha[devList3$measure.min == max(devList3$measure.min)])
+  lambdaOpt3 <- devList3$lambda.min[which(devList3$alpha==alphaOpt3)]
+  newX3 <- as.matrix(dataFinal[, -1][, VarSelected3])
+  
+  newY3 <- dataFinal$y
+  fit3 <- glmnet(newX3, newY3,
+                 alpha = alphaOpt3, lambda = lambdaOpt3, family = "binomial")
+  testfit3 <- coef(fit3)
+  scores3 <- apply(newX3, 1, function(vec) {sum(vec[testfit3@i[-1]] * testfit3@x[-1])})
+  rocobj3 <- roc(as.numeric(newY3==1),
+                 scores3, direction = "<")
+  
+  
+  return(list(
+         auc.diff1 = rocobj1$auc - rocobj2$auc,
+         auc.diff2 = rocobj1$auc - rocobj3$auc,
+         auc1 = rocobj1$auc,
+         auc2 = rocobj2$auc,
+         auc3 = rocobj3$auc
+         ))
+}
+
+
 # smooth_bootstrap_selected: calculate confidence intervals for AUC for a gene subset via smoothed bootstrapping
 smooth_bootstrap_selected <- function(dataFinal, testfit, genesList){
   newX <- as.matrix(dataFinal[, -1])
@@ -146,6 +200,29 @@ smooth_bootstrap_selected <- function(dataFinal, testfit, genesList){
   return(list(auc = rocobj$auc, rocobj, 
               newY, scores,
               coords(rocobj,"best", ret=c("ppv","npv","sensitivity","specificity"))))
+}
+
+# smooth_bootstrap_selected_diff: calculate AUC differences for a gene subset via smoothed bootstrapping
+smooth_bootstrap_selected_diff <- function(dataFinal, testfit, genesList1, genesList2){
+  newX1 <- as.matrix(dataFinal[, -1])
+  newY1 <- dataFinal$y
+  scores1 <- apply(newX1, 1, function(vec) {sum((vec * testfit[as.character(genesList1),]))})
+  
+  rocobj1 <- roc(as.numeric(newY1==1), 
+                 scores1, direction = "<")
+  
+  newX2 <- as.matrix(dataFinal[, -1])
+  newY2 <- dataFinal$y
+  scores2 <- apply(newX2, 1, function(vec) {sum((vec * testfit[as.character(genesList2),]))})
+  
+  rocobj2 <- roc(as.numeric(newY2==1), 
+                 scores2, direction = "<")
+  
+  return(list(
+              auc.diff = rocobj1$auc - rocobj2$auc,
+              auc1 = rocobj1$auc,
+              auc2 = rocobj2$auc
+              ))
 }
 
 # ggboxroc: output boxplot of scores and ROC curves for a fitted model 
@@ -323,6 +400,72 @@ ggsave(p, filename = file.path("figs", "jpg", "Figure2.jpg"),
        dpi = 400, width = 4, height = 8, units = "in",
        type = "cairo")
 
+# calculate the percentage weights of three compartments
+targetPercent <- lapply(targets_DSP, function(target){
+  sweep(x[, paste0("Mean_", target, c("_Melanocyte", "_CD45", "_CD68"))], 1, 
+        rowSums(x[, paste0("Mean_", target, c("_Melanocyte", "_CD45", "_CD68"))]), "/")
+}) 
+
+targetPercent <- do.call(cbind, targetPercent)
+
+# plot the heatmaps by compartment
+pheatmap::pheatmap(t(targetPercent[, grep("_Melanocyte", colnames(targetPercent))]), cluster_rows = FALSE)
+pheatmap::pheatmap(t(targetPercent[, grep("_CD45", colnames(targetPercent))]), cluster_rows = FALSE)
+pheatmap::pheatmap(t(targetPercent[, grep("_CD68", colnames(targetPercent))]), cluster_rows = FALSE)
+
+# rename the target names 
+breaksList <- seq(0.16, 0.50, by = 0.01)
+colnames(targetPercent) <- gsub("Mean_", "", colnames(targetPercent))
+colnames(targetPercent) <- gsub("_Melanocyte", "_S100", colnames(targetPercent))
+
+# re-plot the heatmaps by removing outlier samples 
+pheatmap::pheatmap(t(targetPercent[-c(5, 9, 33, 26, 51), 3*(1:39) - 2]), show_colnames = FALSE, 
+                   breaks = breaksList,
+                   color = colorRampPalette(rev(RColorBrewer::brewer.pal(n = 7, name = "RdYlBu")))(length(breaksList)))
+pheatmap::pheatmap(t(targetPercent[-c(5, 9, 33, 26, 51), 3*(1:39) - 1]), show_colnames = FALSE, 
+                   breaks = breaksList,
+                   color = colorRampPalette(rev(RColorBrewer::brewer.pal(n = 7, name = "RdYlBu")))(length(breaksList)))
+pheatmap::pheatmap(t(targetPercent[-c(5, 9, 33, 26, 51), 3*(1:39) - 0]), show_colnames = FALSE, 
+                   breaks = breaksList,
+                   color = colorRampPalette(rev(RColorBrewer::brewer.pal(n = 7, name = "RdYlBu")))(length(breaksList)))
+
+# generate boxplots 
+dat <- data.frame(targetPercent[-c(5, 9, 33, 26, 51), ]) 
+dat$sampleID <- rownames(dat)
+dat <- tidyr::pivot_longer(dat, -sampleID, names_to = "type", values_to = "value")
+dat$comp <- sapply(strsplit(dat$type, "_"), function(x) x[2]) 
+dat$target <- sapply(strsplit(dat$type, "_"), function(x) x[1]) 
+
+pvalues <- c()
+for(target in targets_DSP){
+  tmp <- dat[which(dat$target==target), ]
+  test <- rstatix::anova_test(tmp, value~comp)
+  pvalues <- rbind(pvalues,
+                   data.frame(target, pvalue = test$p))
+}
+
+dat$target <- factor(dat$target, levels = pvalues[order(pvalues$pvalue), "target"])
+
+p <- ggplot(dat, aes(x = comp, y = value, color = comp)) +
+  geom_boxplot()+
+  facet_wrap(~target)+
+  xlab("")+
+  ylab("Percentages")+
+  geom_hline(yintercept = 1/3, color = "red")+
+  theme_bw() + 
+  labs(color = "Compartment") +
+  theme(legend.position = "top")
+
+ggsave(p, filename = file.path("figs", "tiff", "FigureS1.tiff"), 
+       dpi = 400, width = 4, height = 8, units = "in",
+       type = "cairo")
+ggsave(p, filename = file.path("figs", "svg", "FigureS1.svg"), 
+       dpi = 400, width = 4, height = 8, units = "in",
+       type = "cairo")
+ggsave(p, filename = file.path("figs", "jpg", "FigureS1.jpg"), 
+       dpi = 400, width = 4, height = 8, units = "in",
+       type = "cairo")
+
 rm(list = c("p", "x", "targetannot2", "matchedproteins", "cormat",
             "new_target_DSP", "proteins_to_be_matched", "targets_DSP",
             "i", "target", "removeIndex"))
@@ -433,44 +576,86 @@ for (i in seq_len(length(runNames))){
   
   dir.create("output/models/")
   if(identical(runName, c('Bulk','Mean DSP')) == TRUE){
-    save(p, aucList, file = file.path("output/models/", "modelboth.rdata"))
+    save(p, aucList, devList, file = file.path("output/models/", "modelboth.rdata"))
     res <- scores_calculator(devList, x[,c(VarSelected)], y, family = "binomial")
-    save(res, VarSelected, x, y, file = file.path("output/models/", "scores_modelboth.rdata"))
+    save(res, VarSelected, y, x, dataFinal, file = file.path("output/models/", "scores_modelboth.rdata"))
   } else if (runName == c('Mean DSP') ){
-    save(p, aucList, file = file.path("output/models/", "modelDSP.rdata"))
+    save(p, aucList, devList, file = file.path("output/models/", "modelDSP.rdata"))
     res <- scores_calculator(devList, x[,c(VarSelected)], y, family = "binomial")
-    save(res, VarSelected, file = file.path("output/models/", "scores_modelDSP.rdata"))
+    save(res, VarSelected, dataFinal, file = file.path("output/models/", "scores_modelDSP.rdata"))
   } else {
-    save(p, aucList, file = file.path("output/models/", "modelRNA.rdata"))
+    save(p, aucList, devList, file = file.path("output/models/", "modelRNA.rdata"))
     res <- scores_calculator(devList, x[,c(VarSelected)], y, family = "binomial")
-    save(res, VarSelected, file = file.path("output/models/", "scores_modelRNA.rdata"))
+    save(res, VarSelected, dataFinal, file = file.path("output/models/", "scores_modelRNA.rdata"))
   }
 }
 
 rm(list = c("p", "aucList", "runNames", "runName", "alphaLength", 
             "bsList", "dataFinal", "filename", "measure", "nalpharep", 
-            "x", "y", "selectedx", "nfolds", "tmp", "addVarlist", "res",
+            "selectedx", "nfolds", "tmp", "addVarlist", "res",
             "standbylist", "VarSelected", "modelSize", "i", "devList", "alphaList"))
 
 
 #### 3.6: create Figure 4 containing boxplots of scores and ROC curves for three models 
 # load fitted model for Bulk DNA only
 load(file = file.path("output/models", "modelRNA.rdata"))
+load(file = file.path("output/models", "scores_modelRNA.rdata"))
+aucList.RNA <- aucList
+devList.RNA <- devList
+VarSelected.RNA <- VarSelected
 p1 <- p
 apply(do.call(rbind, aucList[[2]][,5]), 2, 
       function(x) quantile(x, c(0.5, 0.025, 0.975))) %>% round(3)
+# perform t-test on the scores across two groups 
+dat <- data.frame(scores = res[[2]],
+                  outcome = dataFinal[, 1])
+t.test(scores ~ outcome, data = dat)
 
 # load fitted model for DSP only
 load(file = file.path("output/models", "modelDSP.rdata"))
+load(file = file.path("output/models", "scores_modelDSP.rdata"))
+aucList.DSP <- aucList
+devList.DSP <- devList
+VarSelected.DSP <- VarSelected
 p2 <- p
 apply(do.call(rbind, aucList[[2]][,5]), 2, 
       function(x) quantile(x, c(0.5, 0.025, 0.975))) %>% round(3)
+# perform t-test on the scores across two groups 
+dat <- data.frame(scores = res[[2]],
+                  outcome = dataFinal[, 1])
+t.test(scores ~ outcome, data = dat)
 
 # load fitted model for DSP and Bulk DNA
 load(file = file.path("output/models", "modelboth.rdata"))
+load(file = file.path("output/models", "scores_modelboth.rdata"))
+aucList.both <- aucList
+devList.both <- devList
+VarSelected.both <- VarSelected
 p3 <- p
 apply(do.call(rbind, aucList[[2]][,5]), 2, 
       function(x) quantile(x, c(0.5, 0.025, 0.975))) %>% round(3)
+# perform t-test on the scores across two groups 
+dat <- data.frame(scores = res[[2]],
+                  outcome = dataFinal[, 1])
+t.test(scores ~ outcome, data = dat)
+
+# compare AUC curves between RNA, DSP and combined model. Calculate standard deviation 
+nbootrep <- 5000
+set.seed(seed)
+dataFinal_total <- data.frame(y = as.factor(y), x, check.names = FALSE)
+aucList.diff <- kernelboot(dataFinal_total, function(x)
+  smooth_bootstrap_diff(x, devList.both, devList.RNA, devList.DSP, 
+                        VarSelected.both, VarSelected.RNA, VarSelected.DSP), R=nbootrep, kernel = "gaussian")
+
+sprintf("%.3f ± %.3f", mean(unlist(aucList.diff[[2]][,1])), sd(unlist(aucList.diff[[2]][,1])))
+sprintf("%.3f ± %.3f", mean(unlist(aucList.diff[[2]][,2])), sd(unlist(aucList.diff[[2]][,1])))
+
+ci1 <- quantile(unlist(aucList.diff[[2]][,1]), c(0.025, 0.50, 0.975))
+ci2 <- quantile(unlist(aucList.diff[[2]][,2]), c(0.025, 0.50, 0.975))
+
+p1 <- (1 + sum(unlist(aucList.diff[[2]][,1])<=0))/(nbootrep + 1)
+p2 <- (1 + sum(unlist(aucList.diff[[2]][,2])<=0))/(nbootrep + 1)
+
 
 p_all <- p1[[1]] + ggtitle(expression(bold("Bulk RNA model"))) + 
   theme(plot.title = element_text(hjust = 0.5)) + 
@@ -742,6 +927,16 @@ aucList <- kernelboot(dataFinal, function(x)
   R=nrep, kernel = "gaussian")
 
 p <- ggboxroc(aucList = aucList, labels = c("SD/PD", "CR/PR"))
+
+# difference between 8-gene list and 7-gene list 
+gene7 <- setdiff(gene8, "Mean_MSH2_Melanocyte")
+aucList_diff <- kernelboot(dataFinal[, c("y", gene8)], function(x) 
+  smooth_bootstrap_selected_diff(x, testfit = res[[3]], gene8, gene7), 
+  R=nbootrep, kernel = "gaussian")
+
+sprintf("%.3f ± %.3f", mean(unlist(aucList_diff[[2]][,1])), sd(unlist(aucList_diff[[2]][,1])))
+ci3 <- quantile(unlist(aucList_diff[[2]][,1]), c(0.025, 0.50, 0.975))
+p3 <- (1 + sum(unlist(aucList_diff[[2]][,1])<=0))/(nbootrep + 1)
 
 # save the results for later use
 save(p, aucList, file = file.path("output", "models", "model8.rdata"))
