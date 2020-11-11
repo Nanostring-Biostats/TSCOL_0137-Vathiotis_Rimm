@@ -102,6 +102,8 @@ out_R$FC <- unlist(apply(data, 1, function(x) {
 # merge with annotations
 out_R <- merge(out_R, targetannot, by.x = 1, by.y = 1)
 out_R$Source <- factor(out_R$Source, levels = c('IO360','CD45','CD68','Melanocyte'))
+# remove technical controls
+out_R <- subset(out_R, !grepl('IgG', Gene))
 
 #### 1.2 Graph Objective Response DE Results ####
 OR_VP <- ggplot(subset(out_R, run %in% c('Bulk','Mean DSP')),
@@ -113,7 +115,7 @@ OR_VP <- ggplot(subset(out_R, run %in% c('Bulk','Mean DSP')),
   labs(title = '', y = 'Significance, -log10(P)', x = 'Fold Change, log2(FC)') +
   scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
   geom_text_repel(data = subset(out_R, run %in% c('Bulk','Mean DSP') &
-                                  abs(FC) > 0.25 & pval < 0.01),
+                                  (FC < -0.5 | FC > 1 | pval < 0.01)),
                   color = 'black', size = 5, fontface = 'bold',
                   segment.size = 1, box.padding = .45, min.segment.length = .1,
                   point.padding = .3) +
@@ -123,7 +125,7 @@ OR_VP <- ggplot(subset(out_R, run %in% c('Bulk','Mean DSP')),
                                 IO360 = '#000080')) +
   guides(color = guide_legend(title = 'Analyte', override.aes = list(size = 5)), size = FALSE) +
   geom_hline(yintercept = -log10(0.05), lty = 'dashed', color = 'black') +
-  annotate(geom = 'text', x = -.8, y = 1.4, label = 'P = 0.05', size = 5) +
+  annotate(geom = 'text', x = 1.6, y = 1.4, label = 'P = 0.05', size = 5) +
   theme(legend.position = c(0.15,0.85), aspect.ratio = 0.9,
         legend.background = element_rect(color = 'darkgray', fill = 'white'))
 
