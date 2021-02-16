@@ -126,8 +126,10 @@ OR_VP <- ggplot(subset(out_R, run %in% c('Bulk','Mean DSP')),
   guides(color = guide_legend(title = 'Analyte', override.aes = list(size = 5)), size = FALSE) +
   geom_hline(yintercept = -log10(0.05), lty = 'dashed', color = 'black') +
   annotate(geom = 'text', x = 1.6, y = 1.4, label = 'P = 0.05', size = 5) +
+  labs(tag = "a") +
   theme(legend.position = c(0.15,0.85), aspect.ratio = 0.9,
-        legend.background = element_rect(color = 'darkgray', fill = 'white'))
+        legend.background = element_rect(color = 'darkgray', fill = 'white'), 
+        plot.tag = element_text(size = 12, face = "bold")) 
 
 write.csv(out_R[which(out_R$FC<=0), ], file = 'output/negative_predictors.csv', row.names = FALSE)
 
@@ -136,9 +138,12 @@ dir.create("figs/")
 dir.create("figs/tiff")
 dir.create("figs/svg")
 dir.create("figs/jpg")
-ggsave(OR_VP, filename = 'figs/tiff/Figure3.tiff', width = 8, height = 8, dpi = 300)
-ggsave(OR_VP, filename = 'figs/svg/Figure3.svg', width = 8, height = 8, dpi = 300)
-ggsave(OR_VP, filename = 'figs/jpg/Figure3.jpg', width = 8, height = 8, dpi = 300)
+dir.create("figs/eps")
+
+ggsave(OR_VP, filename = 'figs/tiff/Figure2a.tiff', width = 8, height = 8, dpi = 300)
+ggsave(OR_VP, filename = 'figs/svg/Figure2a.svg', width = 8, height = 8, dpi = 300)
+ggsave(OR_VP, filename = 'figs/jpg/Figure2a.jpg', width = 8, height = 8, dpi = 300)
+ggsave(OR_VP, filename = 'figs/eps/Figure2a.eps', width = 8, height = 8, dpi = 300)
 
 #############################
 #### 2.0 Correlation Map ####
@@ -158,19 +163,29 @@ cor_heat <- pheatmap(gene_cor,
                                              IO360 = '#000080', Melanocyte = '#009000')))
 
 #### 2.2: Save Files ####
-tiff(filename = 'figs/tiff/Figure1.tiff', width = 8, height = 6, units = 'in', res = 300)
+tiff(filename = 'figs/tiff/Figure1a.tiff', width = 8, height = 6, units = 'in', res = 300)
 grid::grid.newpage()
 grid::grid.draw(cor_heat$gtable)
+grid::grid.text(expression(bold("a")), x = 0.01, y = 0.99)
 dev.off()
 
-jpeg(filename = 'figs/jpg/Figure1.jpg', width = 8, height = 6, units = 'in', res = 300)
+jpeg(filename = 'figs/jpg/Figure1a.jpg', width = 8, height = 6, units = 'in', res = 300)
 grid::grid.newpage()
 grid::grid.draw(cor_heat$gtable)
+grid::grid.text(expression(bold("a")), x = 0.01, y = 0.99)
 dev.off()
 
-svg(filename = 'figs/svg/Figure1.svg', width = 8, height = 6)
+svg(filename = 'figs/svg/Figure1a.svg', width = 8, height = 6)
 grid::grid.newpage()
 grid::grid.draw(cor_heat$gtable)
+grid::grid.text(expression(bold("a")), x = 0.01, y = 0.99)
+dev.off()
+
+setEPS()
+postscript('figs/eps/Figure1a.eps', width = 8, height = 6)
+grid::grid.newpage()
+grid::grid.draw(cor_heat$gtable)
+grid::grid.text(expression(bold("a")), x = 0.01, y = 0.99)
 dev.off()
 
 ########################################
