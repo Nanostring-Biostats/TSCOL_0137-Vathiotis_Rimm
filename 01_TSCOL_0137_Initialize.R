@@ -135,15 +135,11 @@ write.csv(out_R[which(out_R$FC<=0), ], file = 'output/negative_predictors.csv', 
 
 #### 1.3 Save DE Results ####
 dir.create("figs/")
-dir.create("figs/tiff")
-dir.create("figs/svg")
 dir.create("figs/jpg")
 dir.create("figs/eps")
 
-ggsave(OR_VP, filename = 'figs/tiff/Figure2a.tiff', width = 8, height = 8, dpi = 300)
-ggsave(OR_VP, filename = 'figs/svg/Figure2a.svg', width = 8, height = 8, dpi = 300)
 ggsave(OR_VP, filename = 'figs/jpg/Figure2a.jpg', width = 8, height = 8, dpi = 300)
-ggsave(OR_VP, filename = 'figs/eps/Figure2a.eps', width = 8, height = 8, dpi = 300)
+ggsave(OR_VP, filename = 'figs/eps/Figure2a.eps', width = 8, height = 8, dpi = 300, device = cairo_ps)
 
 #############################
 #### 2.0 Correlation Map ####
@@ -163,26 +159,14 @@ cor_heat <- pheatmap(gene_cor,
                                              IO360 = '#000080', Melanocyte = '#009000')))
 
 #### 2.2: Save Files ####
-tiff(filename = 'figs/tiff/Figure1a.tiff', width = 8, height = 6, units = 'in', res = 300)
-grid::grid.newpage()
-grid::grid.draw(cor_heat$gtable)
-grid::grid.text(expression(bold("a")), x = 0.01, y = 0.99)
-dev.off()
-
 jpeg(filename = 'figs/jpg/Figure1a.jpg', width = 8, height = 6, units = 'in', res = 300)
 grid::grid.newpage()
 grid::grid.draw(cor_heat$gtable)
 grid::grid.text(expression(bold("a")), x = 0.01, y = 0.99)
 dev.off()
 
-svg(filename = 'figs/svg/Figure1a.svg', width = 8, height = 6)
-grid::grid.newpage()
-grid::grid.draw(cor_heat$gtable)
-grid::grid.text(expression(bold("a")), x = 0.01, y = 0.99)
-dev.off()
-
 setEPS()
-postscript('figs/eps/Figure1a.eps', width = 8, height = 6)
+postscript('figs/eps/Figure1a.eps', width = 8, height = 6, bg = "white")
 grid::grid.newpage()
 grid::grid.draw(cor_heat$gtable)
 grid::grid.text(expression(bold("a")), x = 0.01, y = 0.99)
