@@ -324,9 +324,8 @@ data <- data[-removeIndex, ]
 # create folders to store different output formats
 if(file.exists("figs") == FALSE){
   dir.create("figs/")
-  dir.create("figs/tiff")
-  dir.create("figs/svg")
   dir.create("figs/jpg")
+  dir.create("figs/eps")
 }
 
 ####################################################
@@ -383,7 +382,6 @@ for(i in seq_len(nrow(cormat))){
 
 #### 2.4: generate the correlation heatmaps and output it as a table
 p <- pheatmap::pheatmap(cormat, cluster_cols = TRUE, 
-                        main = "Spearman Ranked Correlation Coefficient",
                         ylab="test")
 
 write.table(round(cormat, 4),
@@ -391,84 +389,21 @@ write.table(round(cormat, 4),
             sep = " ", quote = FALSE)
 
 #### 2.5: save the correlation heatmap as figure 2
-ggsave(p, filename = file.path("figs", "tiff", "Figure2.tiff"), 
-       dpi = 400, width = 4, height = 8, units = "in",
-       type = "cairo")
-ggsave(p, filename = file.path("figs", "svg", "Figure2.svg"), 
-       dpi = 400, width = 4, height = 8, units = "in")
-ggsave(p, filename = file.path("figs", "jpg", "Figure2.jpg"), 
+ggsave(p, filename = file.path("figs", "jpg", "Figure1b.jpg"), 
        dpi = 400, width = 4, height = 8, units = "in",
        type = "cairo")
 
-# calculate the percentage weights of three compartments
-targetPercent <- lapply(targets_DSP, function(target){
-  sweep(x[, paste0("Mean_", target, c("_Melanocyte", "_CD45", "_CD68"))], 1, 
-        rowSums(x[, paste0("Mean_", target, c("_Melanocyte", "_CD45", "_CD68"))]), "/")
-}) 
+setEPS()
+postscript('figs/eps/Figure1b.eps', width = 4, height = 8, bg = "white")
+grid::grid.newpage()
+grid::grid.draw(p$gtable)
+grid::grid.text(expression(bold("b")), x = 0.02, y = 0.99)
+grid::grid.rect(x = unit(0.185, "npc"), y = unit(0.790, "npc"),
+          width = unit(0.495, "npc"), height = unit(0.235, "npc"),
+          jus= "left", 
+          gp=grid::gpar(col="red", fill = "transparent", lty = "dashed", lwd = 2))
+dev.off()
 
-targetPercent <- do.call(cbind, targetPercent)
-
-# plot the heatmaps by compartment
-pheatmap::pheatmap(t(targetPercent[, grep("_Melanocyte", colnames(targetPercent))]), cluster_rows = FALSE)
-pheatmap::pheatmap(t(targetPercent[, grep("_CD45", colnames(targetPercent))]), cluster_rows = FALSE)
-pheatmap::pheatmap(t(targetPercent[, grep("_CD68", colnames(targetPercent))]), cluster_rows = FALSE)
-
-# rename the target names 
-breaksList <- seq(0.16, 0.50, by = 0.01)
-colnames(targetPercent) <- gsub("Mean_", "", colnames(targetPercent))
-colnames(targetPercent) <- gsub("_Melanocyte", "_S100", colnames(targetPercent))
-
-# re-plot the heatmaps by removing outlier samples 
-pheatmap::pheatmap(t(targetPercent[-c(5, 9, 33, 26, 51), 3*(1:39) - 2]), show_colnames = FALSE, 
-                   breaks = breaksList,
-                   color = colorRampPalette(rev(RColorBrewer::brewer.pal(n = 7, name = "RdYlBu")))(length(breaksList)))
-pheatmap::pheatmap(t(targetPercent[-c(5, 9, 33, 26, 51), 3*(1:39) - 1]), show_colnames = FALSE, 
-                   breaks = breaksList,
-                   color = colorRampPalette(rev(RColorBrewer::brewer.pal(n = 7, name = "RdYlBu")))(length(breaksList)))
-pheatmap::pheatmap(t(targetPercent[-c(5, 9, 33, 26, 51), 3*(1:39) - 0]), show_colnames = FALSE, 
-                   breaks = breaksList,
-                   color = colorRampPalette(rev(RColorBrewer::brewer.pal(n = 7, name = "RdYlBu")))(length(breaksList)))
-
-# generate boxplots 
-dat <- data.frame(targetPercent[-c(5, 9, 33, 26, 51), ]) 
-dat$sampleID <- rownames(dat)
-dat <- tidyr::pivot_longer(dat, -sampleID, names_to = "type", values_to = "value")
-dat$comp <- sapply(strsplit(dat$type, "_"), function(x) x[2]) 
-dat$target <- sapply(strsplit(dat$type, "_"), function(x) x[1]) 
-
-pvalues <- c()
-for(target in targets_DSP){
-  tmp <- dat[which(dat$target==target), ]
-  test <- rstatix::anova_test(tmp, value~comp)
-  pvalues <- rbind(pvalues,
-                   data.frame(target, pvalue = test$p))
-}
-
-dat$target <- factor(dat$target, levels = pvalues[order(pvalues$pvalue), "target"])
-
-p <- ggplot(dat, aes(x = comp, y = value, color = comp)) +
-  geom_boxplot()+
-  facet_wrap(~target)+
-  xlab("")+
-  ylab("Percentages")+
-  geom_hline(yintercept = 1/3, color = "red")+
-  theme_bw() + 
-  labs(color = "Compartment") +
-  theme(legend.position = "top")
-
-ggsave(p, filename = file.path("figs", "tiff", "FigureS1.tiff"), 
-       dpi = 400, width = 4, height = 8, units = "in",
-       type = "cairo")
-ggsave(p, filename = file.path("figs", "svg", "FigureS1.svg"), 
-       dpi = 400, width = 4, height = 8, units = "in",
-       type = "cairo")
-ggsave(p, filename = file.path("figs", "jpg", "FigureS1.jpg"), 
-       dpi = 400, width = 4, height = 8, units = "in",
-       type = "cairo")
-
-rm(list = c("p", "x", "targetannot2", "matchedproteins", "cormat",
-            "new_target_DSP", "proteins_to_be_matched", "targets_DSP",
-            "i", "target", "removeIndex"))
 
 ####################################################################
 #### Section 3: Building regularized logistic regression models ####
@@ -634,6 +569,51 @@ VarSelected.both <- VarSelected
 p3 <- p
 apply(do.call(rbind, aucList[[2]][,5]), 2, 
       function(x) quantile(x, c(0.5, 0.025, 0.975))) %>% round(3)
+
+# save plot 
+p1[[1]] <- p1[[1]] +
+  labs(tag = "b") +
+  theme(plot.tag = element_text(size = 12, face = "bold")) 
+p1[[2]]$layers[[3]]$aes_params$size <- 5
+p2[[2]]$layers[[3]]$aes_params$size <- 5
+p3[[2]]$layers[[3]]$aes_params$size <- 5
+
+p_all <- p1[[1]] + ggtitle(expression(bold("Bulk RNA model"))) + 
+  theme(title = element_text(size = 12, face = "bold",colour = "black"),
+        plot.title = element_text(hjust = 0.5),
+        axis.text = element_text(size = 12, face = "plain",colour = "black"),
+        axis.title = element_text(size = 14, face = "plain",colour = "black")) + 
+  p2[[1]] + ylab("") + ggtitle(expression(bold("DSP model"))) + 
+  theme(title = element_text(size = 12, face = "bold",colour = "black"),
+        plot.title = element_text(hjust = 0.5),
+        axis.text = element_text(size = 12, face = "plain",colour = "black"),
+        axis.title = element_text(size = 14, face = "plain",colour = "black")) + 
+  p3[[1]] + ylab("") + ggtitle(expression(bold("Combined model"))) + 
+  theme(title = element_text(size = 12, face = "bold",colour = "black"),
+        plot.title = element_text(hjust = 0.5),
+        axis.text = element_text(size = 12, face = "plain",colour = "black"),
+        axis.title = element_text(size = 14, face = "plain",colour = "black")) + 
+  p1[[2]] + theme(plot.margin = margin(t = -20, unit = "pt"),
+                  plot.tag = element_text(size = 12, face = "bold"),
+                  axis.text = element_text(size = 12, face = "plain",colour = "black"),
+                  axis.title = element_text(size = 14, face = "plain",colour = "black")) + 
+  p2[[2]] + ylab("") + theme(plot.margin = margin(t = -20, unit = "pt"),
+                             plot.tag = element_text(size = 12, face = "bold"),
+                             axis.text = element_text(size = 12, face = "plain",colour = "black"),
+                             axis.title = element_text(size = 14, face = "plain",colour = "black")) + 
+  p3[[2]] + ylab("") + theme(plot.margin = margin(t = -20, unit = "pt"),
+                             plot.tag = element_text(size = 12, face = "bold"),
+                             axis.text = element_text(size = 12, face = "plain",colour = "black"),
+                             axis.title = element_text(size = 14, face = "plain",colour = "black")) + 
+  plot_layout(nrow = 2) 
+
+
+ggsave(p_all, filename = file.path("figs", "jpg", "Figure2b.jpg"), 
+       dpi = 400, width = 13, height = 8, units = "in",
+       type = "cairo")
+ggsave(p_all, filename = file.path("figs", "eps", "Figure2b.eps"), 
+       dpi = 400, width = 13, height = 8, units = "in", device = cairo_ps)
+
 # perform t-test on the scores across two groups 
 dat <- data.frame(scores = res[[2]],
                   outcome = dataFinal[, 1])
@@ -657,25 +637,7 @@ p1 <- (1 + sum(unlist(aucList.diff[[2]][,1])<=0))/(nbootrep + 1)
 p2 <- (1 + sum(unlist(aucList.diff[[2]][,2])<=0))/(nbootrep + 1)
 
 
-p_all <- p1[[1]] + ggtitle(expression(bold("Bulk RNA model"))) + 
-  theme(plot.title = element_text(hjust = 0.5)) + 
-  p2[[1]] + ylab("") + ggtitle(expression(bold("DSP model"))) + 
-  theme(plot.title = element_text(hjust = 0.5)) + 
-  p3[[1]] + ylab("") + ggtitle(expression(bold("Combined model"))) + 
-  theme(plot.title = element_text(hjust = 0.5)) + 
-  p1[[2]] + theme(plot.margin = margin(t = -20, unit = "pt")) + 
-  p2[[2]] + ylab("") + theme(plot.margin = margin(t = -20, unit = "pt")) + 
-  p3[[2]] + ylab("") + theme(plot.margin = margin(t = -20, unit = "pt")) + 
-  plot_layout(nrow = 2) 
 
-ggsave(p_all, filename = file.path("figs", "tiff", "Figure4.tiff"), 
-       dpi = 400, width = 8, height = 5, units = "in",
-       type = "cairo")
-ggsave(p_all, filename = file.path("figs", "svg", "Figure4.svg"), 
-       dpi = 400, width = 8, height = 5, units = "in")
-ggsave(p_all, filename = file.path("figs", "jpg", "Figure4.jpg"), 
-       dpi = 400, width = 8, height = 5, units = "in",
-       type = "cairo")
 
 rm(list = c("p", "p1", "p2", "p3", "p_all", "aucList"))
 
@@ -818,7 +780,7 @@ for (k in 4:13){
   if ("Mean_PhosphoSTAT5_CD68" %in% genesList){
     genesList <- c( setdiff(genesList, "Mean_PhosphoSTAT5_CD68"), "PhosphoSTAT5 in CD68")
   }
-  test_labels[genesList, k-3] <- "∗"
+  test_labels[genesList, k-3] <- "\U002A"
 }
 
 # output the heatmap as figure 5
@@ -834,14 +796,19 @@ p <- pheatmap::pheatmap(df*10,  cluster_cols = FALSE,
                         annotation_colors = annotation_colors,
                         number_format = "%.2f %%")
 
-ggsave(p, filename = file.path("figs", "tiff", "Figure5.tiff"), 
-       dpi = 400, width = 8, height = 5, units = "in",
-       type = "cairo")
-ggsave(p, filename = file.path("figs", "svg", "Figure5.svg"), 
-       dpi = 400, width = 8, height = 5, units = "in")
-ggsave(p, filename = file.path("figs", "jpg", "Figure5.jpg"), 
-       dpi = 400, width = 8, height = 5, units = "in",
-       type = "cairo")
+jpeg(filename = 'figs/jpg/Figure3b.jpg', width = 8, height = 5, units = 'in', res = 400)
+grid::grid.newpage()
+grid::grid.draw(p$gtable)
+grid::grid.text(expression(bold("b")), x = 0.01, y = 0.98)
+dev.off()
+
+setEPS()
+postscript('figs/eps/Figure3b.eps', width = 8, height = 5, bg = "white", encoding='ISOLatin2.enc')
+grid::grid.newpage()
+grid::grid.draw(p$gtable)
+grid::grid.text(expression(bold("b")), x = 0.01, y = 0.98)
+dev.off()
+
 
 rm(list = c("annot_row", "annotation_colors", "aucmat", "coefVar", "df",
             "gene_df", "p", "rocobj", "rocobjsave", "test_labels", 
@@ -874,6 +841,7 @@ for(k in 4:13){
 
 # output the connected scatter plots as figure 6 for five metrics
 for (ind in c("AUC", "PPV","NPV","Sensitivity","Specificity")){
+  letter <- c("a", "c", "d", "a", "b")[which(ind == c("AUC", "PPV","NPV","Sensitivity","Specificity"))]
   p <- ggplot(subset(resmat, subset = (index == ind)), 
               aes(x = K, y = X50.)) +
     geom_point(size = 3, color = "darkblue") +
@@ -884,7 +852,9 @@ for (ind in c("AUC", "PPV","NPV","Sensitivity","Specificity")){
     scale_y_continuous(limits = c(0, 1)) +
     scale_x_continuous(breaks = c(4:13)) +
     theme_bw() +
-    theme(text = element_text(size = 15),
+    labs(tag = letter) +
+    theme(plot.tag = element_text(size = 12, face = "bold"),
+          text = element_text(size = 15),
           legend.position = "none",
           panel.grid.minor = element_blank(),
           panel.grid.major = element_blank())
@@ -897,17 +867,23 @@ for (ind in c("AUC", "PPV","NPV","Sensitivity","Specificity")){
     p <- p + ylab("Negative Predictive Value")
   }
   
-  ggsave(filename = file.path("figs", "tiff", 
-                              paste0("Figure6", "-", ind, ".tiff")), 
-         dpi = 400, width = 6, height = 5, units = "in",
-         type = "cairo")
-  ggsave(filename = file.path("figs", "svg", 
-                              paste0("Figure6", "-", ind, ".svg")), 
-         dpi = 400, width = 6, height = 5, units = "in")
-  ggsave(filename = file.path("figs", "jpg", 
-                         paste0("Figure6", "-", ind, ".jpg")), 
-         dpi = 400, width = 6, height = 5, units = "in",
-         type = "cairo")
+  if (ind == "AUC"){
+    ggsave(filename = file.path("figs", "jpg", 
+                                paste0("Figure3a.jpg")), 
+           dpi = 400, width = 6, height = 5, units = "in",
+           type = "cairo")
+    ggsave(filename = file.path("figs", "eps", 
+                                paste0("Figure3a.eps")), 
+           dpi = 400, width = 6, height = 5, units = "in", device = cairo_ps)
+  } else {
+    ggsave(filename = file.path("figs", "jpg", 
+                                sprintf("Extended_Figure1%s.jpg", letter)), 
+           dpi = 400, width = 6, height = 5, units = "in",
+           type = "cairo")
+    ggsave(filename = file.path("figs", "eps", 
+                                sprintf("Extended_Figure1%s.eps", letter)), 
+           dpi = 400, width = 6, height = 5, units = "in", device = cairo_ps)
+  }
 
 }
 
@@ -942,16 +918,31 @@ p3 <- (1 + sum(unlist(aucList_diff[[2]][,1])<=0))/(nbootrep + 1)
 save(p, aucList, file = file.path("output", "models", "model8.rdata"))
 
 # save the boxplot of scores and ROC curves as figure 7
-p_comb <- p[[1]] + p[[2]]
+p[[1]] <- p[[1]] +
+  labs(tag = "a") +
+  theme(plot.tag = element_text(size = 12, face = "bold"),
+        axis.text = element_text(size = 12, face = "plain",colour = "black"),
+        axis.title = element_text(size = 14, face = "plain",colour = "black")
+        )
+p[[2]] <- p[[2]] +
+  labs(tag = "b") +
+  theme(plot.tag = element_text(size = 12, face = "bold"),
+        axis.text = element_text(size = 12, face = "plain",colour = "black"),
+        axis.title = element_text(size = 14, face = "plain",colour = "black")
+        )
+p[[2]]$layers[[3]]$aes_params$size <- 6
 
-ggsave(p_comb, filename = file.path("figs", "tiff", "Figure7.tiff"), 
-       dpi = 400, width = 16/3, height = 3, units = "in",
+
+ggsave(p[[1]], filename = file.path("figs", "jpg", "Figure4a.jpg"), 
+       dpi = 400, width = 6, height = 5, units = "in",
        type = "cairo")
-ggsave(p_comb, filename = file.path("figs", "svg", "Figure7.svg"), 
-       dpi = 400, width = 16/3, height =3, units = "in")
-ggsave(p_comb, filename = file.path("figs", "jpg", "Figure7.jpg"), 
-       dpi = 400, width = 16/3, height = 3, units = "in",
+ggsave(p[[1]], filename = file.path("figs", "eps", "Figure4a.eps"), 
+       dpi = 400, width = 6, height = 5, units = "in", device = cairo_ps)
+ggsave(p[[2]], filename = file.path("figs", "jpg", "Figure4b.jpg"), 
+       dpi = 400, width = 6, height = 5, units = "in",
        type = "cairo")
+ggsave(p[[2]], filename = file.path("figs", "eps", "Figure4b.eps"), 
+       dpi = 400, width = 6, height = 5, units = "in", device = cairo_ps)
 
 apply(do.call(rbind, aucList[[2]][,5]), 2, 
       function(x) quantile(x, c(0.5, 0.025, 0.975))) %>% round(3)
@@ -978,25 +969,6 @@ set.seed(seed)
 aucList <- kernelboot(dataFinal, function(x) 
   smooth_bootstrap_selected(x, testfit = res[[3]], gene8), 
   R=nrep, kernel = "gaussian")
-
-#### 5.4: save the boxplot of scores and ROC curves as figure 8
-p <- ggboxroc(aucList = aucList, labels = c("No", "Yes"))
-
-p_comb <- p[[1]]+p[[2]]
-
-ggsave(p_comb, filename = file.path("figs", "tiff", "Figure8.tiff"), 
-       dpi = 400, width = 16/3, height =3, units = "in",
-       type = "cairo")
-ggsave(p_comb, filename = file.path("figs", "svg", "Figure8.svg"), 
-       dpi = 400, width = 16/3, height =3, units = "in")
-ggsave(p_comb, filename = file.path("figs", "jpg", "Figure8.jpg"), 
-       dpi = 400, width = 16/3, height =3, units = "in",
-       type = "cairo")
-
-apply(do.call(rbind, aucList[[2]][,5]), 2, 
-      function(x) quantile(x, c(0.5, 0.025, 0.975))) %>% round(3)
-
-rm(list = c("p_comb", "p", "aucList"))
 
 ##################################################################
 #### Section 6: evaluate 8 predictors on survival data, VITAL ####
@@ -1032,17 +1004,16 @@ ggsurvplot(fit,
 
 p$plot +
   geom_label(label = expression("logrank "*italic(P)*" < 0.0001"), 
-             x = 250, y = 0.08, label.size = NA) -> p
+             x = 250, y = 0.08, label.size = NA) +
+  labs(tag = "c") +
+  theme(plot.tag = element_text(size = 12, face = "bold")) -> p
   
 
-ggsave(p, filename = file.path("figs", "tiff", "Figure9.tiff"), 
+ggsave(p, filename = file.path("figs", "jpg", "Figure4d.jpg"), 
        dpi = 400, width = 6, height = 5, units = "in",
        type = "cairo")
-ggsave(p, filename = file.path("figs", "svg", "Figure9.svg"), 
-       dpi = 400, width = 6, height = 5, units = "in")
-ggsave(p, filename = file.path("figs", "jpg", "Figure9.jpg"), 
-       dpi = 400, width = 6, height = 5, units = "in",
-       type = "cairo")
+ggsave(p, filename = file.path("figs", "eps", "Figure4d.eps"), 
+       dpi = 400, width = 6, height = 5, units = "in", device = cairo_ps)
 
 rm(list = c("fit", "p", "aucList", "dat", "y"))
 
@@ -1084,16 +1055,15 @@ ggsurvplot(fit,
 
 p$plot +
   geom_label(label = expression("logrank "*italic(P)*" < 0.0001"), 
-             x = 250, y = 0.08, label.size = NA) -> p
+             x = 250, y = 0.08, label.size = NA) +
+  labs(tag = "d") +
+  theme(plot.tag = element_text(size = 12, face = "bold")) -> p
 
-ggsave(p, filename = file.path("figs", "tiff", "Figure10.tiff"), 
+
+ggsave(p, filename = file.path("figs", "jpg", "Figure4c.jpg"), 
        dpi = 400, width = 6, height = 5, units = "in",
        type = "cairo")
-ggsave(p, filename = file.path("figs", "svg", "Figure10.svg"), 
-       dpi = 400, width = 6, height = 5, units = "in")
-ggsave(p, filename = file.path("figs", "jpg", "Figure10.jpg"), 
-       dpi = 400, width = 6, height = 5, units = "in",
-       type = "cairo")
-
+ggsave(p, filename = file.path("figs", "eps", "Figure4c.eps"), 
+       dpi = 400, width = 6, height = 5, units = "in", device = cairo_ps)
 rm(list = c("fit", "p", "aucList", "dat", "y"))
 
